@@ -26,6 +26,8 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UnitSymbol from "@/components/unit-symbol";
+import { ECHELONS, isEchelon } from "@/lib/unit-balance";
+import { UnitStats } from "@/components/workspace/unit-stats";
 import { kinds } from "@/lib/simulation";
 import { Sandbox } from "@/hooks/use-sandbox";
 export function WorkspacePanels({
@@ -98,20 +100,17 @@ export function WorkspacePanels({
                   <label htmlFor="echelon" className="text-sm font-medium">
                     Масштаб соединения
                   </label>
-                  <Select value={game.echelon} onValueChange={game.setEchelon}>
+                  <Select
+                    value={game.echelon}
+                    onValueChange={(value) => {
+                      if (isEchelon(value)) game.setEchelon(value);
+                    }}
+                  >
                     <SelectTrigger id="echelon" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {[
-                        "Отделение",
-                        "Взвод",
-                        "Рота",
-                        "Батальон",
-                        "Полк",
-                        "Бригада",
-                        "Дивизия",
-                      ].map((e) => (
+                      {ECHELONS.map((e) => (
                         <SelectItem key={e} value={e}>
                           {e}
                         </SelectItem>
@@ -119,6 +118,9 @@ export function WorkspacePanels({
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              <div className="border-t px-4 py-4">
+                <UnitStats kind={game.kind} echelon={game.echelon} />
               </div>
               <SheetFooter>
                 <Button

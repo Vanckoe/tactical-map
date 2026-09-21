@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { initialUnits, kinds, Kind, Unit, tickUnits } from "@/lib/simulation";
+import { type Echelon, isEchelon } from "@/lib/unit-balance";
 export const regions: Record<string, [number, number]> = {
   "Алматинская область": [43.36, 77.07],
   Астана: [51.16, 71.43],
@@ -19,7 +20,7 @@ export function useSandbox() {
   const [seconds, setSeconds] = useState(0);
   const [side, setSide] = useState<"blue" | "red">("blue");
   const [kind, setKind] = useState<Kind>("infantry");
-  const [echelon, setEchelon] = useState("Батальон");
+  const [echelon, setEchelon] = useState<Echelon>("Батальон");
   const [placing, setPlacing] = useState(false);
   const [command, setCommand] = useState(false);
   const [grid, setGrid] = useState(false);
@@ -131,8 +132,28 @@ export function useSandbox() {
         !Array.isArray(data.units) ||
         !data.units.every(
           (u: Unit) =>
-            typeof u.lat === "number" &&
-            typeof u.lng === "number" &&
+            u &&
+            typeof u.id === "string" &&
+            typeof u.name === "string" &&
+            Number.isFinite(u.lat) &&
+            Math.abs(u.lat) <= 90 &&
+            Number.isFinite(u.lng) &&
+            Math.abs(u.lng) <= 180 &&
+            isEchelon(u.echelon) &&
+            (u.side === "blue" || u.side === "red") &&
+            Number.isFinite(u.hp) &&
+            u.hp >= 0 &&
+            u.hp <= 100 &&
+            Number.isFinite(u.supply) &&
+            u.supply >= 0 &&
+            u.supply <= 100 &&
+            (!u.target ||
+              (Array.isArray(u.target) &&
+                u.target.length === 2 &&
+                Number.isFinite(u.target[0]) &&
+                Math.abs(u.target[0]) <= 90 &&
+                Number.isFinite(u.target[1]) &&
+                Math.abs(u.target[1]) <= 180)) &&
             kinds.some((k) => k.id === u.kind),
         ) ||
         !regions[data.region]

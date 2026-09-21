@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Unit, symbolSvg } from "@/lib/simulation";
+import { getUnitStats } from "@/lib/unit-balance";
 type Props = {
   units: Unit[];
   selected: string;
@@ -77,10 +78,10 @@ export default function TacticalMap({
         })
           .addTo(g)
           .on("click", () => handlers.current.onSelect(u.id));
-        if (active)
+        if (active && u.hp > 0)
           L.circle([u.lat, u.lng], {
-            radius: 4400,
-            color: "#3fa8bc",
+            radius: getUnitStats(u).rangeKm * 1000,
+            color: u.side === "blue" ? "#3fa8bc" : "#cc6258",
             weight: 1,
             dashArray: "5 7",
             fillOpacity: 0.055,

@@ -24,6 +24,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import UnitSymbol from "@/components/unit-symbol";
+import { UnitStats } from "@/components/workspace/unit-stats";
 import { Sandbox } from "@/hooks/use-sandbox";
 export function UnitInspector({
   game,
@@ -156,6 +157,14 @@ export function UnitInspector({
         ))}
       </div>
       <Accordion type="single" collapsible className="border-t px-4">
+        <AccordionItem value="stats">
+          <AccordionTrigger className="py-3 text-xs font-normal">
+            Боевые характеристики
+          </AccordionTrigger>
+          <AccordionContent>
+            <UnitStats kind={u.kind} echelon={u.echelon} />
+          </AccordionContent>
+        </AccordionItem>
         <AccordionItem value="details" className="border-0">
           <AccordionTrigger className="py-3 text-xs font-normal text-muted-foreground">
             Подробнее о соединении
