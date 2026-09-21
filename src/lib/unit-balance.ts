@@ -1,147 +1,61 @@
-/** Игровой баланс, не реальные ТТХ. Все 42 сочетания редактируются независимо. */
-export type Kind =
-  "infantry" | "armor" | "artillery" | "air" | "drone" | "airdefense";
-export const ECHELONS = [
-  "Отделение",
-  "Взвод",
-  "Рота",
-  "Батальон",
-  "Полк",
-  "Бригада",
-  "Дивизия",
-] as const;
+/** Abstract game balance. Values are not equipment specifications. */
+export const KIND_IDS = ["infantry", "armor", "artillery", "air", "drone", "airdefense", "recon", "antitank", "engineer", "logistics", "medical", "ew"] as const;
+export type Kind = (typeof KIND_IDS)[number];
+export const ECHELONS = ["Отделение", "Взвод", "Рота", "Батальон", "Полк", "Бригада", "Дивизия"] as const;
 export type Echelon = (typeof ECHELONS)[number];
-export type UnitStats = {
-  rangeKm: number;
-  damagePerSecond: number; // Условные очки урона при полной боеспособности.
-  defense: number; // Поглощение = defense / (100 + defense).
-  speedKph: number; // Км за час симуляции, не реального времени.
-  durability: number; // Очки прочности; интерфейс показывает остаток в процентах.
+export type UnitRole = "combat" | "recon" | "support";
+export type UnitProfile = {
+  label: string; short: string; role: UnitRole; description: string;
+  airborne: boolean; rangeKm: number; minRangeKm: number; detectionKm: number;
+  supportKm: number; deploySeconds: number; fireOnMove: boolean;
+  damagePerSecond: number; defense: number; speedKph: number; durability: number;
+  movementCost: number; firingCost: number; supplyCapacity: number;
+  echelons: readonly Echelon[];
 };
-function stats(
-  rangeKm: number,
-  damagePerSecond: number,
-  defense: number,
-  speedKph: number,
-  durability: number,
-): UnitStats {
-  return { rangeKm, damagePerSecond, defense, speedKph, durability };
+const ground: UnitProfile = {
+  label: "", short: "", role: "combat", description: "", airborne: false,
+  rangeKm: 1.8, minRangeKm: 0, detectionKm: 3, supportKm: 0, deploySeconds: 0,
+  fireOnMove: true, damagePerSecond: 8, defense: 18, speedKph: 28, durability: 1100,
+  movementCost: 0.4, firingCost: 0.08, supplyCapacity: 1000, echelons: ECHELONS,
+};
+const specialists: readonly Echelon[] = ["Взвод", "Рота", "Батальон"];
+export const UNIT_PROFILES: Record<Kind, UnitProfile> = {
+  infantry: { ...ground, label: "Мотопехота", short: "мсб", description: "Универсальное наземное подразделение. В движении стреляет менее эффективно; на месте постепенно укрепляет позицию." },
+  armor: { ...ground, label: "Танковые", short: "тб", rangeKm: 2.5, defense: 65, speedKph: 39, durability: 1900, damagePerSecond: 15, movementCost: 1.1, firingCost: 0.12, description: "Защищённая ударная сила против наземных целей. Расходует больше снабжения на движение, уязвима для противотанковых частей." },
+  artillery: { ...ground, label: "Артиллерия", short: "адн", rangeKm: 12, minRangeKm: 2, detectionKm: 2, deploySeconds: 30, fireOnMove: false, defense: 10, speedKph: 24, durability: 850, damagePerSecond: 20, firingCost: 0.3, echelons: ["Взвод", "Рота", "Батальон", "Полк", "Бригада"], description: "Огонь только с развёрнутой позиции по обнаруженным союзниками наземным целям. Есть мёртвая зона; движение сбрасывает развёртывание. Сильно подавляет цель." },
+  air: { ...ground, label: "Ударная авиация", short: "ав", airborne: true, rangeKm: 6, detectionKm: 8, defense: 16, speedKph: 400, durability: 1300, damagePerSecond: 25, movementCost: 0.6, firingCost: 0.25, echelons: ["Рота", "Батальон", "Полк"], description: "Быстро перемещается и поражает наземные цели. Не ведёт воздушный бой; уязвима для ПВО. Расходует снабжение даже без приказа на движение." },
+  drone: { ...ground, label: "Разведывательные БПЛА", short: "бпла", role: "recon", airborne: true, rangeKm: 0, detectionKm: 10, damagePerSecond: 0, defense: 3, speedKph: 86, durability: 440, movementCost: 0.2, echelons: specialists, description: "Не атакуют: обнаруживают цели для всей своей стороны, в том числе артиллерии. В зоне РЭБ дальность обнаружения и скорость снижаются." },
+  airdefense: { ...ground, label: "ПВО", short: "зрдн", rangeKm: 12, detectionKm: 14, deploySeconds: 10, fireOnMove: false, defense: 24, speedKph: 27, durability: 1250, damagePerSecond: 19, firingCost: 0.2, echelons: ["Взвод", "Рота", "Батальон", "Полк", "Бригада"], description: "Обнаруживает воздушные средства на большой дистанции и поражает только авиацию и БПЛА. После перемещения требуется развёртывание." },
+  recon: { ...ground, label: "Разведка", short: "рр", role: "recon", detectionKm: 9, rangeKm: 0.8, damagePerSecond: 2, defense: 10, speedKph: 42, durability: 650, echelons: specialists, description: "Расширяет общее поле обнаружения наземных целей. Вооружение предназначено для ближнего боя, а не для столкновения с танками." },
+  antitank: { ...ground, label: "Противотанковые", short: "пт", rangeKm: 3.5, minRangeKm: 0.2, detectionKm: 4, deploySeconds: 8, fireOnMove: false, damagePerSecond: 12, defense: 12, speedKph: 26, durability: 700, firingCost: 0.18, echelons: specialists, description: "Приоритет — бронетехника. Сильны против танков, слабее против пехоты. Стреляют после остановки и развёртывания." },
+  engineer: { ...ground, label: "Инженерные", short: "исб", role: "support", rangeKm: 0.6, damagePerSecond: 1.5, supportKm: 1.5, defense: 12, durability: 900, echelons: specialists, description: "На месте ускоряют укрепление ближайшего неподвижного наземного союзника. Инженерные работы расходуют снабжение и прекращаются под огнём." },
+  logistics: { ...ground, label: "Снабжение", short: "обмо", role: "support", rangeKm: 0, damagePerSecond: 0, supportKm: 2, defense: 4, speedKph: 32, durability: 800, supplyCapacity: 6000, echelons: specialists, description: "Передают конечный запас ресурсов одному ближайшему неподвижному союзнику. Не пополняют другие части снабжения; под огнём разгрузка прекращается." },
+  medical: { ...ground, label: "Медицинские", short: "мед", role: "support", rangeKm: 0, damagePerSecond: 0, supportKm: 1.5, defense: 2, durability: 500, echelons: specialists, description: "Восстанавливают только обратимую часть потерь наземных подразделений: до четверти полученного урона. Не восстанавливают уничтоженные части и не работают под огнём." },
+  ew: { ...ground, label: "РЭБ", short: "рэб", role: "support", rangeKm: 0, damagePerSecond: 0, supportKm: 6, deploySeconds: 15, fireOnMove: false, defense: 6, durability: 600, echelons: specialists, description: "После развёртывания подавляют вражеские БПЛА в радиусе действия. Снижают их обзор и скорость, расходуют ресурс при активных помехах. Эффекты нескольких станций не складываются." },
+};
+export const kinds = KIND_IDS.map((id) => ({ id, ...UNIT_PROFILES[id] }));
+const scale: Record<Echelon, number> = { Отделение: 0.06, Взвод: 0.15, Рота: 0.4, Батальон: 1, Полк: 2.5, Бригада: 3.8, Дивизия: 10 };
+export type UnitStats = Pick<UnitProfile, "rangeKm" | "minRangeKm" | "detectionKm" | "supportKm" | "deploySeconds" | "damagePerSecond" | "defense" | "speedKph" | "durability" | "supplyCapacity">;
+export function getUnitStats(unit: { kind: Kind; echelon: Echelon }): UnitStats {
+  const p = UNIT_PROFILES[unit.kind], size = scale[unit.echelon];
+  return { rangeKm: p.rangeKm, minRangeKm: p.minRangeKm, detectionKm: p.detectionKm, supportKm: p.supportKm, deploySeconds: p.deploySeconds,
+    damagePerSecond: Number((p.damagePerSecond * size).toFixed(2)), defense: p.defense,
+    speedKph: p.speedKph, durability: p.durability * size, supplyCapacity: p.supplyCapacity * size };
 }
-//                               км    урон/с  защита км/ч прочность
-export const UNIT_BALANCE: Record<Kind, Record<Echelon, UnitStats>> = {
-  infantry: {
-    Отделение: stats(0.6, 0.4, 8, 36, 60),
-    Взвод: stats(0.8, 1.1, 10, 34, 160),
-    Рота: stats(1.2, 3.2, 14, 32, 420),
-    Батальон: stats(1.8, 8, 18, 28, 1100),
-    Полк: stats(2, 19, 22, 25, 2800),
-    Бригада: stats(2.2, 28, 26, 23, 4200),
-    Дивизия: stats(2.5, 66, 32, 19, 11000),
-  },
-  armor: {
-    Отделение: stats(1.2, 0.8, 50, 48, 110),
-    Взвод: stats(1.6, 2.2, 55, 46, 280),
-    Рота: stats(2, 6, 60, 43, 750),
-    Батальон: stats(2.5, 15, 65, 39, 1900),
-    Полк: stats(2.7, 35, 70, 35, 4800),
-    Бригада: stats(3, 52, 75, 32, 7200),
-    Дивизия: stats(3.2, 120, 80, 27, 18500),
-  },
-  artillery: {
-    Отделение: stats(4, 1.2, 4, 30, 45),
-    Взвод: stats(6, 3, 6, 28, 120),
-    Рота: stats(9, 8, 8, 26, 320),
-    Батальон: stats(12, 20, 10, 24, 850),
-    Полк: stats(16, 48, 12, 21, 2200),
-    Бригада: stats(20, 70, 14, 19, 3300),
-    Дивизия: stats(24, 160, 18, 16, 8500),
-  },
-  air: {
-    Отделение: stats(3, 1.5, 10, 440, 70),
-    Взвод: stats(4, 4, 12, 430, 190),
-    Рота: stats(5, 10, 14, 420, 500),
-    Батальон: stats(6, 25, 16, 400, 1300),
-    Полк: stats(7, 60, 18, 380, 3400),
-    Бригада: stats(8, 88, 20, 360, 5000),
-    Дивизия: stats(9, 200, 24, 320, 13000),
-  },
-  drone: {
-    Отделение: stats(1, 0.2, 0, 100, 25),
-    Взвод: stats(1.5, 0.6, 1, 96, 65),
-    Рота: stats(2, 1.6, 2, 92, 170),
-    Батальон: stats(2.5, 4, 3, 86, 440),
-    Полк: stats(3, 10, 4, 80, 1100),
-    Бригада: stats(3.5, 15, 5, 74, 1700),
-    Дивизия: stats(4, 35, 6, 66, 4400),
-  },
-  airdefense: {
-    Отделение: stats(3, 1, 12, 34, 70),
-    Взвод: stats(5, 2.8, 16, 32, 180),
-    Рота: stats(8, 7.5, 20, 30, 480),
-    Батальон: stats(12, 19, 24, 27, 1250),
-    Полк: stats(16, 45, 28, 24, 3200),
-    Бригада: stats(20, 66, 32, 21, 4800),
-    Дивизия: stats(25, 150, 38, 18, 12500),
-  },
-};
-/** Строка — атакующий, столбец — цель. Ноль означает недоступный тип цели. */
-export const DAMAGE_MULTIPLIERS: Record<Kind, Record<Kind, number>> = {
-  infantry: {
-    infantry: 1,
-    armor: 0.35,
-    artillery: 1,
-    air: 0,
-    drone: 0.2,
-    airdefense: 0.7,
-  },
-  armor: {
-    infantry: 1.1,
-    armor: 1,
-    artillery: 1.2,
-    air: 0,
-    drone: 0,
-    airdefense: 1,
-  },
-  artillery: {
-    infantry: 1.3,
-    armor: 0.65,
-    artillery: 1,
-    air: 0,
-    drone: 0,
-    airdefense: 1,
-  },
-  air: {
-    infantry: 1,
-    armor: 1.1,
-    artillery: 1.2,
-    air: 0.6,
-    drone: 0.4,
-    airdefense: 0.8,
-  },
-  drone: {
-    infantry: 0.6,
-    armor: 0.8,
-    artillery: 1,
-    air: 0,
-    drone: 0,
-    airdefense: 0.7,
-  },
-  airdefense: {
-    infantry: 0,
-    armor: 0,
-    artillery: 0,
-    air: 1.5,
-    drone: 1.2,
-    airdefense: 0,
-  },
-};
-export const SUPPLY_COST = { movementPerKm: 0.15, firingPerSecond: 0.08 };
-export function isEchelon(value: unknown): value is Echelon {
-  return typeof value === "string" && ECHELONS.some((e) => e === value);
+export function damageMultiplier(attacker: Kind, target: Kind): number {
+  if (attacker === "medical" || attacker === "logistics" || attacker === "ew" || attacker === "drone") return 0;
+  if (attacker === "airdefense") return target === "air" ? 1.5 : target === "drone" ? 1.2 : 0;
+  if (UNIT_PROFILES[target].airborne) return 0;
+  if (attacker === "antitank") return target === "armor" ? 2 : 0.35;
+  if (attacker === "recon" || attacker === "engineer") return target === "armor" ? 0.1 : 0.5;
+  if (attacker === "infantry") return target === "armor" ? 0.35 : 1;
+  if (attacker === "artillery") return target === "armor" ? 0.65 : 1.3;
+  if (attacker === "air") return target === "armor" ? 1.1 : 1;
+  return target === "armor" ? 1 : 1.1;
 }
-export function getUnitStats(unit: {
-  kind: Kind;
-  echelon: Echelon;
-}): UnitStats {
-  return UNIT_BALANCE[unit.kind][unit.echelon];
+export function isEchelon(value: unknown): value is Echelon { return typeof value === "string" && ECHELONS.some((e) => e === value); }
+export function echelonLabel(kind: Kind, echelon: Echelon) {
+  if (kind === "air") return ({ Рота: "Звено", Батальон: "Эскадрилья", Полк: "Авиаполк" } as Partial<Record<Echelon, string>>)[echelon] ?? echelon;
+  if (kind === "artillery" || kind === "airdefense") return echelon === "Рота" ? "Батарея" : echelon === "Батальон" ? "Дивизион" : echelon;
+  return echelon;
 }

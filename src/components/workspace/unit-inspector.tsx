@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import UnitSymbol from "@/components/unit-symbol";
 import { UnitStats } from "@/components/workspace/unit-stats";
+import { UNIT_PROFILES, echelonLabel } from "@/lib/unit-balance";
 import { Sandbox } from "@/hooks/use-sandbox";
 export function UnitInspector({
   game,
@@ -36,10 +37,11 @@ export function UnitInspector({
   const u = game.unit;
   if (!u) return null;
   function move(attack = false) {
+    game.setAttackCommand(attack);
     game.setCommand(true);
     game.setPlacing(false);
     if (attack)
-      game.setToast("Укажите точку сближения. Бой начнётся автоматически.");
+      game.setToast("Сближение до контакта: часть остановится при обнаружении доступной цели.");
   }
   return (
     <section
@@ -47,10 +49,10 @@ export function UnitInspector({
       aria-label="Выбранное соединение"
     >
       <div className="flex items-start gap-3 p-4">
-        <UnitSymbol kind={u.kind} side={u.side} />
+        <UnitSymbol kind={u.kind} side={u.side} echelon={u.echelon} />
         <div className="min-w-0 flex-1">
           <p className="mb-1 text-[10px] text-muted-foreground">
-            {u.side === "blue" ? "Свои войска" : "Противник"} · {u.echelon}
+            {u.side === "blue" ? "Свои войска" : "Противник"} · {echelonLabel(u.kind, u.echelon)}
           </p>
           <h2 className="truncate text-sm font-semibold">{u.name}</h2>
         </div>
@@ -121,7 +123,7 @@ export function UnitInspector({
             game.setUnits((us) =>
               us.map((v) =>
                 v.id === u.id
-                  ? { ...v, target: undefined, order: "Удержание" }
+                  ? { ...v, target: undefined, advance: false, order: "Удержание" }
                   : v,
               ),
             );
@@ -133,7 +135,7 @@ export function UnitInspector({
           Удерживать
         </Button>
         <Button
-          disabled={u.hp <= 0}
+          disabled={u.hp <= 0 || UNIT_PROFILES[u.kind].damagePerSecond === 0}
           variant="outline"
           className="h-14 flex-col gap-1 text-[11px]"
           onClick={() => move(true)}
@@ -173,7 +175,10 @@ export function UnitInspector({
             <p>
               {u.lat.toFixed(4)}° N · {u.lng.toFixed(4)}° E
             </p>
-            <p>Мораль: {u.hp > 60 ? "высокая" : "низкая"}</p>
+            <p>Подавление: {Math.round(u.suppression ?? 0)}%</p>
+            <p>Укрепление позиции: {Math.round((u.entrenchment ?? 0) * 100)}%</p>
+            <p>Обратимые потери: {(u.recoverableHp ?? 0).toFixed(1)}%</p>
+            <p>На позиции: {Math.floor(u.stationarySeconds ?? 0)} с</p>
             <p>
               {u.target
                 ? "Приказ принят. Маршрут отображён на карте."

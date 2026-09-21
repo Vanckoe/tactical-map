@@ -1,5 +1,6 @@
 "use client";
 import dynamic from "next/dynamic";
+import { StandardSwitch } from "@/components/symbology/standard-switch";
 import { useState, type CSSProperties } from "react";
 import {
   PanelLeft,
@@ -100,6 +101,7 @@ function Workspace() {
           <ScenarioMenu game={game} onJournal={() => setPanel("journal")} />
         </div>
         <div className="workspace-map-controls">
+          <StandardSwitch />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -235,10 +237,10 @@ function Workspace() {
               value={String(game.speed)}
               onValueChange={(v) => game.setSpeed(Number(v))}
             >
-              {[1, 2, 5].map((s) => (
+              {[1, 2, 5, 10, 20, 25, 50].map((s) => (
                 <DropdownMenuRadioItem key={s} value={String(s)}>
                   {s}×{" "}
-                  {s === 1 ? "Обычная" : s === 2 ? "Ускоренная" : "Быстрая"}
+                  {s === 1 ? "" : s === 2 ? "" : ""}
                 </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>

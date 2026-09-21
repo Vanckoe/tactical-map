@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { Plus, Search, PanelLeftClose, ListTree, Radio } from "lucide-react";
+import Link from "next/link";
+import { Plus, Search, PanelLeftClose, ListTree, Radio, BookOpen } from "lucide-react";
 import {
   Sidebar,
   SidebarHeader,
@@ -17,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import UnitSymbol from "@/components/unit-symbol";
+import { echelonLabel } from "@/lib/unit-balance";
 import { Sandbox } from "@/hooks/use-sandbox";
 export function ForcesSidebar({
   game,
@@ -101,13 +103,13 @@ export function ForcesSidebar({
                     setOpenMobile(false);
                   }}
                 >
-                  <UnitSymbol kind={u.kind} side={u.side} />
+                  <UnitSymbol kind={u.kind} side={u.side} echelon={u.echelon} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-xs font-medium">
                       {u.name}
                     </span>
                     <span className="mt-1 block text-[11px] text-muted-foreground">
-                      {u.echelon} · {u.order}
+                      {echelonLabel(u.kind, u.echelon)} · {u.order}
                     </span>
                   </span>
                   <span
@@ -147,6 +149,9 @@ export function ForcesSidebar({
           <Badge variant="secondary" className="ml-auto">
             {game.logs.length}
           </Badge>
+        </Button>
+        <Button asChild variant="ghost" className="justify-start text-muted-foreground">
+          <Link href="/symbols" target="_blank" rel="noopener noreferrer"><BookOpen />Справочник обозначений ↗</Link>
         </Button>
       </SidebarFooter>
     </Sidebar>

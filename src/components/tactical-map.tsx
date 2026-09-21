@@ -2,8 +2,10 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { Unit, symbolSvg } from "@/lib/simulation";
-import { getUnitStats } from "@/lib/unit-balance";
+import { Unit } from "@/lib/simulation";
+import { symbolSvg, affiliationColor } from "@/lib/symbology";
+import { useSymbolStandard } from "@/components/symbology/symbol-provider";
+import { echelonLabel, getUnitStats } from "@/lib/unit-balance";
 type Props = {
   units: Unit[];
   selected: string;
@@ -26,6 +28,7 @@ export default function TacticalMap({
   zoomAction,
   enemies,
 }: Props) {
+  const { standard } = useSymbolStandard();
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const group = useRef<L.LayerGroup | null>(null);
@@ -71,7 +74,7 @@ export default function TacticalMap({
           alt: u.name,
           icon: L.divIcon({
             className: `unit-marker ${active ? "selected" : ""} ${u.hp <= 0 ? "disabled" : ""}`,
-            html: `${symbolSvg(u.kind, u.side)}<span>${u.id.padStart(2, "0")} / ${u.echelon === "Рота" ? "I" : u.echelon === "Батальон" ? "II" : "III"}</span>`,
+            html: `${symbolSvg(u.kind, u.side, standard, u.echelon)}<span>${u.id.padStart(2, "0")} / ${echelonLabel(u.kind, u.echelon)}</span>`,
             iconSize: [56, 59],
             iconAnchor: [28, 27],
           }),
@@ -80,8 +83,8 @@ export default function TacticalMap({
           .on("click", () => handlers.current.onSelect(u.id));
         if (active && u.hp > 0)
           L.circle([u.lat, u.lng], {
-            radius: getUnitStats(u).rangeKm * 1000,
-            color: u.side === "blue" ? "#3fa8bc" : "#cc6258",
+            radius: (getUnitStats(u).supportKm || getUnitStats(u).rangeKm || getUnitStats(u).detectionKm) * 1000,
+            color: affiliationColor(standard, u.side, u.kind),
             weight: 1,
             dashArray: "5 7",
             fillOpacity: 0.055,
@@ -89,13 +92,13 @@ export default function TacticalMap({
           }).addTo(g);
         if (routes && u.target)
           L.polyline([[u.lat, u.lng], u.target], {
-            color: u.side === "blue" ? "#168fa9" : "#cc6258",
+            color: affiliationColor(standard, u.side, u.kind),
             weight: 2,
             dashArray: "7 7",
             interactive: false,
           }).addTo(g);
       });
-  }, [units, selected, routes, enemies]);
+  }, [units, selected, routes, enemies, standard]);
   useEffect(() => {
     map.current?.flyTo(focus, 10, { duration: 0.8 });
   }, [focus]);

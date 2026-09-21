@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import {
   ChevronDown,
   Save,
@@ -99,6 +100,9 @@ export function ScenarioMenu({
         >
           <Maximize />
           Полноэкранный режим
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/symbols" target="_blank" rel="noopener noreferrer"><BookOpen />Тактические обозначения ↗</Link>
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => game.setModal("help")}>
           <BookOpen />

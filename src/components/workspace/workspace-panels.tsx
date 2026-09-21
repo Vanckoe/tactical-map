@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { Plus, Radio } from "lucide-react";
 import {
   Sheet,
@@ -26,7 +27,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UnitSymbol from "@/components/unit-symbol";
-import { ECHELONS, isEchelon } from "@/lib/unit-balance";
+import { UNIT_PROFILES, echelonLabel, isEchelon } from "@/lib/unit-balance";
 import { UnitStats } from "@/components/workspace/unit-stats";
 import { kinds } from "@/lib/simulation";
 import { Sandbox } from "@/hooks/use-sandbox";
@@ -39,6 +40,7 @@ export function WorkspacePanels({
   panel: string;
   setPanel: (v: string) => void;
 }) {
+  const [role, setRole] = useState("all");
   return (
     <>
       <Sheet
@@ -81,14 +83,25 @@ export function WorkspacePanels({
                   <legend className="mb-3 text-sm font-medium">
                     Род войск
                   </legend>
+                  <Tabs value={role} onValueChange={setRole} className="mb-3">
+                    <TabsList className="w-full">
+                      <TabsTrigger value="all" className="flex-1 text-xs">Все</TabsTrigger>
+                      <TabsTrigger value="combat" className="flex-1 text-xs">Боевые</TabsTrigger>
+                      <TabsTrigger value="recon" className="flex-1 text-xs">Разведка</TabsTrigger>
+                      <TabsTrigger value="support" className="flex-1 text-xs">Поддержка</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
                   <div className="grid grid-cols-2 gap-2">
-                    {kinds.map((k) => (
+                    {kinds.filter((k) => role === "all" || k.role === role).map((k) => (
                       <Button
                         key={k.id}
                         variant={game.kind === k.id ? "secondary" : "outline"}
                         aria-pressed={game.kind === k.id}
-                        className={`h-20 flex-col gap-1 text-xs ${game.kind === k.id ? "ring-1 ring-foreground" : ""}`}
-                        onClick={() => game.setKind(k.id)}
+                        className={`h-20 flex-col gap-1 whitespace-normal text-center text-xs ${game.kind === k.id ? "ring-1 ring-foreground" : ""}`}
+                        onClick={() => {
+                          game.setKind(k.id);
+                          if (!k.echelons.includes(game.echelon)) game.setEchelon(k.echelons.includes("Батальон") ? "Батальон" : k.echelons[0]);
+                        }}
                       >
                         <UnitSymbol kind={k.id} side={game.side} />
                         {k.label}
@@ -96,6 +109,7 @@ export function WorkspacePanels({
                     ))}
                   </div>
                 </fieldset>
+                <p className="rounded-lg bg-muted p-3 text-xs leading-relaxed" role="status">{UNIT_PROFILES[game.kind].label}: {UNIT_PROFILES[game.kind].description}</p>
                 <div className="space-y-2">
                   <label htmlFor="echelon" className="text-sm font-medium">
                     Масштаб соединения
@@ -110,9 +124,9 @@ export function WorkspacePanels({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {ECHELONS.map((e) => (
+                      {UNIT_PROFILES[game.kind].echelons.map((e) => (
                         <SelectItem key={e} value={e}>
-                          {e}
+                          {echelonLabel(game.kind, e)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -186,7 +200,7 @@ export function WorkspacePanels({
             <div className="space-y-4 text-sm text-muted-foreground">
               <p>
                 Разместите силы обеих сторон и задайте маршруты. При сближении
-                бой начнётся автоматически.
+                бой начнётся после обнаружения допустимой цели и развёртывания.
               </p>
               <p>
                 ИИ противника, цели и условия победы пока в разработке. Сейчас
@@ -216,7 +230,7 @@ export function WorkspacePanels({
                 Ctrl/⌘ + B открывает список войск.
               </p>
               <p className="rounded-lg bg-muted p-3 text-xs">
-                Симуляция и военные знаки условные. Соответствие официальным
+                Поддержка работает автоматически после остановки в радиусе союзника. Разведка передаёт цели своей стороне. Видимость маркеров в песочнице не означает обнаружение для огня. Симуляция и военные знаки условные. Соответствие официальным
                 обозначениям ВС Казахстана не подтверждено.
               </p>
             </div>

@@ -23,6 +23,7 @@ export function useSandbox() {
   const [echelon, setEchelon] = useState<Echelon>("Батальон");
   const [placing, setPlacing] = useState(false);
   const [command, setCommand] = useState(false);
+  const [attackCommand, setAttackCommand] = useState(false);
   const [grid, setGrid] = useState(false);
   const [routes, setRoutes] = useState(true);
   const [enemies, setEnemies] = useState(true);
@@ -100,7 +101,7 @@ export function useSandbox() {
       setUnits((u) =>
         u.map((v) =>
           v.id === selected
-            ? { ...v, target: [lat, lng], order: "Движение" }
+            ? { ...v, target: [lat, lng], advance: attackCommand, stationarySeconds: 0, entrenchment: 0, order: attackCommand ? "Сближение" : "Движение" }
             : v,
         ),
       );
@@ -147,6 +148,12 @@ export function useSandbox() {
             Number.isFinite(u.supply) &&
             u.supply >= 0 &&
             u.supply <= 100 &&
+            (u.advance === undefined || typeof u.advance === "boolean") &&
+            [u.stationarySeconds, u.entrenchment, u.suppression, u.recoverableHp].every((value) => value === undefined || (Number.isFinite(value) && value >= 0)) &&
+            (u.entrenchment === undefined || u.entrenchment <= 1) &&
+            (u.suppression === undefined || u.suppression <= 100) &&
+            (u.stationarySeconds === undefined || u.stationarySeconds <= 3600) &&
+            (u.recoverableHp === undefined || u.recoverableHp <= 100 - u.hp + 0.000001) &&
             (!u.target ||
               (Array.isArray(u.target) &&
                 u.target.length === 2 &&
@@ -209,6 +216,7 @@ export function useSandbox() {
     setPlacing,
     command,
     setCommand,
+    setAttackCommand,
     grid,
     setGrid,
     routes,
