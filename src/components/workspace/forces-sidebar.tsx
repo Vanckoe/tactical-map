@@ -89,7 +89,7 @@ export function ForcesSidebar({
         <SidebarGroup className="px-2 pt-0">
           <p className="px-2 pb-3 text-xs text-muted-foreground">
             {game.side === "blue"
-              ? "Группировка «Жетысу»"
+              ? game.scenario?.name ?? "Группировка «Жетысу»"
               : "Условный противник"}
           </p>
           <SidebarMenu>
@@ -128,6 +128,8 @@ export function ForcesSidebar({
       </SidebarContent>
       <SidebarFooter className="gap-2 border-t p-3">
         <Button
+          disabled={!!game.scenario}
+          title={game.scenario ? "Состав сил задан сценарием. Создавайте части в свободной песочнице." : undefined}
           onClick={() => {
             setOpenMobile(false);
             onCreate();

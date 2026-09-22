@@ -29,6 +29,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UnitSymbol from "@/components/unit-symbol";
 import { UNIT_PROFILES, echelonLabel, isEchelon } from "@/lib/unit-balance";
 import { UnitStats } from "@/components/workspace/unit-stats";
+import { SCENARIOS } from "@/lib/scenarios";
 import { kinds } from "@/lib/simulation";
 import { Sandbox } from "@/hooks/use-sandbox";
 export function WorkspacePanels({
@@ -73,7 +74,7 @@ export function WorkspacePanels({
                       <TabsTrigger value="blue" className="flex-1">
                         Свои войска
                       </TabsTrigger>
-                      <TabsTrigger value="red" className="flex-1">
+                      <TabsTrigger disabled={game.botEnabled} value="red" className="flex-1">
                         Противник
                       </TabsTrigger>
                     </TabsList>
@@ -138,6 +139,7 @@ export function WorkspacePanels({
               </div>
               <SheetFooter>
                 <Button
+                  disabled={!!game.battle.winner || !!game.scenario}
                   onClick={() => {
                     setPanel("");
                     game.setPlacing(true);
@@ -203,10 +205,9 @@ export function WorkspacePanels({
                 бой начнётся после обнаружения допустимой цели и развёртывания.
               </p>
               <p>
-                ИИ противника, цели и условия победы пока в разработке. Сейчас
-                обе стороны управляются вручную.
+                Противник управляется ботом. Наступающие начинают примерно в 30 км от города и должны удержать его 15 минут. Оборона удерживает город до конца времени и получает резервы из тыла по расписанию. Зоны местности учебные, а не точная модель города.
               </p>
-              <Button onClick={() => game.setModal("")}>Перейти к карте</Button>
+              {SCENARIOS.map((scenario) => <Button key={scenario.id} variant="outline" onClick={() => game.selectScenario(scenario.id)}>{scenario.name}</Button>)}
             </div>
           ) : (
             <div className="space-y-4 text-sm leading-relaxed text-muted-foreground">

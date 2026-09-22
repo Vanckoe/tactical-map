@@ -6,7 +6,12 @@ import { Unit } from "@/lib/simulation";
 import { symbolSvg, affiliationColor } from "@/lib/symbology";
 import { useSymbolStandard } from "@/components/symbology/symbol-provider";
 import { echelonLabel, getUnitStats } from "@/lib/unit-balance";
+import type { Scenario } from "@/lib/scenarios";
+import type { Battle } from "@/lib/battle";
 type Props = {
+  scenario?: Scenario;
+  points: Battle["points"];
+  releasedReserves: string[];
   units: Unit[];
   selected: string;
   onSelect: (id: string) => void;
@@ -18,6 +23,7 @@ type Props = {
   enemies: boolean;
 };
 export default function TacticalMap({
+  scenario, points, releasedReserves,
   units,
   selected,
   onSelect,
@@ -65,6 +71,20 @@ export default function TacticalMap({
     const g = group.current;
     if (!g) return;
     g.clearLayers();
+    scenario?.terrain.forEach((zone) => {
+      L.circle([zone.lat, zone.lng], { radius: zone.radiusKm * 1000, color: zone.type === "water" ? "#377ea5" : zone.type === "urban" ? "#9b7185" : "#987838", weight: 1, fillOpacity: 0.2, dashArray: zone.type === "water" ? undefined : "4 4" }).addTo(g).bindTooltip(zone.label);
+    });
+    scenario?.objectives.forEach((objective) => {
+      const state = points[objective.id];
+      const label = `${objective.name} · ${state?.contested ? "Оспаривается" : state?.owner === "blue" ? "Свои" : state?.owner === "red" ? "Противник" : "Нейтральная"}`;
+      L.circle([objective.lat, objective.lng], { radius: objective.radiusKm * 1000, color: state?.owner ? affiliationColor(standard, state.owner) : "#565656", weight: 2, fillOpacity: 0.08 }).addTo(g).bindTooltip(label, { permanent: true, direction: "center" });
+    });
+    scenario?.reserves.filter((wave) => !releasedReserves.includes(wave.id)).forEach((wave, index) => {
+      const position = wave.units[0];
+      if (!enemies && position.side === "red") return;
+      L.circleMarker([position.lat, position.lng], { radius: 12, color: affiliationColor(standard, position.side), dashArray: "3 4", fillOpacity: 0.1 })
+        .addTo(g).bindTooltip(`${wave.name} · ${wave.releaseSeconds / 60} мин`, { permanent: true, direction: index % 2 ? "bottom" : "top" });
+    });
     units
       .filter((u) => enemies || u.side === "blue")
       .forEach((u) => {
@@ -91,17 +111,20 @@ export default function TacticalMap({
             interactive: false,
           }).addTo(g);
         if (routes && u.target)
-          L.polyline([[u.lat, u.lng], u.target], {
+          L.polyline([[u.lat, u.lng], ...(u.route ?? [u.target])], {
             color: affiliationColor(standard, u.side, u.kind),
             weight: 2,
             dashArray: "7 7",
             interactive: false,
           }).addTo(g);
       });
-  }, [units, selected, routes, enemies, standard]);
+  }, [units, selected, routes, enemies, standard, scenario, points, releasedReserves]);
   useEffect(() => {
-    map.current?.flyTo(focus, 10, { duration: 0.8 });
-  }, [focus]);
+    if (scenario && focus[0] === scenario.center[0] && focus[1] === scenario.center[1]) {
+      const positions = [...scenario.units, ...scenario.reserves.flatMap((wave) => wave.units)];
+      map.current?.fitBounds(L.latLngBounds(positions.map((u) => [u.lat, u.lng])), { paddingTopLeft: [window.innerWidth > 900 ? 360 : 60, 180], paddingBottomRight: [150, 130], maxZoom: 12 });
+    } else map.current?.flyTo(focus, scenario ? 12 : 10, { duration: 0.8 });
+  }, [focus, scenario]);
   const lastZoom = useRef(0);
   useEffect(() => {
     if (zoomAction !== lastZoom.current)

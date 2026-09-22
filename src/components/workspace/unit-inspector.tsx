@@ -92,6 +92,7 @@ export function UnitInspector({
             </DropdownMenuItem>
             <DropdownMenuItem
               variant="destructive"
+              disabled={(game.botEnabled && u.side === "red") || !!game.battle.winner}
               onSelect={() => {
                 game.setUnits((us) => us.filter((v) => v.id !== u.id));
                 game.setSelected("");
@@ -107,7 +108,7 @@ export function UnitInspector({
       </div>
       <div className="grid grid-cols-3 gap-1.5 border-y p-3">
         <Button
-          disabled={u.hp <= 0}
+          disabled={u.hp <= 0 || (game.botEnabled && u.side === "red") || !!game.battle.winner}
           variant={game.command ? "secondary" : "outline"}
           className="h-14 flex-col gap-1 text-[11px]"
           onClick={() => move()}
@@ -116,14 +117,14 @@ export function UnitInspector({
           Движение
         </Button>
         <Button
-          disabled={u.hp <= 0}
+          disabled={u.hp <= 0 || (game.botEnabled && u.side === "red") || !!game.battle.winner}
           variant="outline"
           className="h-14 flex-col gap-1 text-[11px]"
           onClick={() => {
             game.setUnits((us) =>
               us.map((v) =>
                 v.id === u.id
-                  ? { ...v, target: undefined, advance: false, order: "Удержание" }
+                  ? { ...v, target: undefined, route: undefined, advance: false, order: "Удержание" }
                   : v,
               ),
             );
@@ -135,7 +136,7 @@ export function UnitInspector({
           Удерживать
         </Button>
         <Button
-          disabled={u.hp <= 0 || UNIT_PROFILES[u.kind].damagePerSecond === 0}
+          disabled={u.hp <= 0 || UNIT_PROFILES[u.kind].damagePerSecond === 0 || (game.botEnabled && u.side === "red") || !!game.battle.winner}
           variant="outline"
           className="h-14 flex-col gap-1 text-[11px]"
           onClick={() => move(true)}

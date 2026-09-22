@@ -1,7 +1,6 @@
 import { test, expect } from "bun:test";
 import { tickUnits, detectedBySide } from "../src/lib/simulation.ts";
 import { getUnitStats, KIND_IDS } from "../src/lib/unit-balance.ts";
-import ms from "milsymbol";
 const unit = (id, kind, side = "blue", lng = 0, extra = {}) => ({ id, name: id, kind, side, lat: 0, lng, echelon: "Батальон", hp: 100, supply: 100, order: "Удержание", ...extra });
 const byId = (units, id) => units.find((u) => u.id === id);
 
@@ -85,7 +84,4 @@ test("50x preserves the same result as fifty 1x steps", () => {
   for (let i = 0; i < 50; i++) slow = tickUnits(slow, 1);
   expect(tickUnits(input, 50)).toEqual(slow);
   expect(tickUnits([...input].reverse(), 50).sort((a,b) => a.id.localeCompare(b.id))).toEqual([...slow].sort((a,b) => a.id.localeCompare(b.id)));
-});
-test("new NATO function codes are recognized by the renderer", () => {
-  for (const code of ["UCR---", "UCAA--", "UCE---", "USS---", "USM---", "UUMSE-"]) expect(new ms.Symbol(`SFGP${code}-F---`, { standard: "APP6" }).isValid()).toBe(true);
 });

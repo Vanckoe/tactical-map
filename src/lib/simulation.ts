@@ -1,4 +1,5 @@
 import { type Kind, type Echelon, getUnitStats, UNIT_PROFILES, damageMultiplier } from "./unit-balance";
+import { planRoute, terrainSpeed, terrainCover, type TerrainZone, type Waypoint } from "./terrain";
 export { kinds } from "./unit-balance";
 import { distanceKm, moveToward } from "./geo";
 export type { Kind, Echelon } from "./unit-balance";
@@ -15,6 +16,7 @@ export type Unit = {
   order: string;
   target?: [number, number];
   advance?: boolean;
+  route?: Waypoint[];
   stationarySeconds?: number;
   entrenchment?: number;
   suppression?: number;
@@ -132,11 +134,11 @@ export const initialUnits: Unit[] = [
 ];
 export { symbolSvg } from "./symbology";
 /** One-second phases keep 50× identical to fifty 1× updates. */
-export function tickUnits(units: Unit[], elapsedSeconds: number): Unit[] {
+export function tickUnits(units: Unit[], elapsedSeconds: number, terrain: TerrainZone[] = []): Unit[] {
   if (!Number.isFinite(elapsedSeconds) || elapsedSeconds <= 0) return units;
   let next = units;
   for (let remaining = elapsedSeconds; remaining > 0; remaining -= Math.min(1, remaining)) {
-    next = stepUnits(next, Math.min(1, remaining));
+    next = stepUnits(next, Math.min(1, remaining), terrain);
   }
   return next;
 }
@@ -154,7 +156,7 @@ export function detectedBySide(target: Unit, side: Unit["side"], units: Unit[], 
     return distanceKm(observer, target) <= range * (disrupted.has(observer.id) ? 0.4 : 1);
   });
 }
-function stepUnits(units: Unit[], dt: number): Unit[] {
+function stepUnits(units: Unit[], dt: number, terrain: TerrainZone[]): Unit[] {
   const movedIds = new Set<string>();
   const disruptedBefore = new Set(units.filter((u) => jammed(u, units)).map((u) => u.id));
   const contacts = new Set(units.filter((u) => u.hp > 0 && detectedBySide(u, u.side === "blue" ? "red" : "blue", units, disruptedBefore)).map((u) => u.id));
@@ -163,15 +165,22 @@ function stepUnits(units: Unit[], dt: number): Unit[] {
     const p = UNIT_PROFILES[u.kind];
     const next = { ...u, order: "Удержание", stationarySeconds: Math.min(3600, (u.stationarySeconds ?? 0) + dt), suppression: clamp((u.suppression ?? 0) - dt * 0.8), entrenchment: u.entrenchment ?? 0, recoverableHp: u.recoverableHp ?? 0 };
     const contact = u.advance && units.some((other) => other.side !== u.side && other.hp > 0 && contacts.has(other.id) && damageMultiplier(u.kind, other.kind) > 0 && distanceKm(u, other) <= p.rangeKm && distanceKm(u, other) >= p.minRangeKm);
-    if (contact) { next.target = undefined; next.advance = false; }
+    if (contact) { next.target = undefined; next.route = undefined; next.advance = false; }
     if (next.target && u.supply > 0) {
-      const destination = { lat: next.target[0], lng: next.target[1] };
+      const route = next.route ?? planRoute(u, { lat: next.target[0], lng: next.target[1] }, terrain, p.airborne);
+      next.route = [...route];
+      const waypoint = route[0];
+      if (!waypoint) return { ...next, order: "Маршрут недоступен" };
+      const destination = { lat: waypoint[0], lng: waypoint[1] };
       const distance = distanceKm(u, destination);
-      const step = Math.min(distance, p.speedKph * (disruptedBefore.has(u.id) ? 0.5 : 1) * (1 - next.suppression / 150) * dt / 3600, u.supply / p.movementCost);
+      const step = Math.min(distance, p.speedKph * (p.airborne ? 1 : terrainSpeed(u, terrain)) * (disruptedBefore.has(u.id) ? 0.5 : 1) * (1 - next.suppression / 150) * dt / 3600, u.supply / p.movementCost);
       Object.assign(next, moveToward(u, destination, step));
       next.supply = clamp(next.supply - step * p.movementCost);
       if (step > 0) { movedIds.add(u.id); next.stationarySeconds = 0; next.entrenchment = 0; }
-      if (step >= distance) next.target = undefined;
+      if (step >= distance) {
+        next.route.shift();
+        if (!next.route.length) { next.target = undefined; next.route = undefined; }
+      }
       else next.order = "Движение";
     }
     if (p.airborne) next.supply = clamp(next.supply - dt * 0.015);
@@ -194,7 +203,7 @@ function stepUnits(units: Unit[], dt: number): Unit[] {
     if (!chosen) return;
     const { target, j, multiplier } = chosen, defense = getUnitStats(target);
     const firingTime = Math.min(dt, attacker.supply / p.firingCost);
-    const damage = stats.damagePerSecond * attacker.hp / 100 * multiplier * (1 - (attacker.suppression ?? 0) / 150) * (movedIds.has(attacker.id) ? 0.5 : 1) * 100 / (100 + defense.defense) * (1 - (target.entrenchment ?? 0) * 0.3) * firingTime;
+    const damage = stats.damagePerSecond * attacker.hp / 100 * multiplier * (1 - (attacker.suppression ?? 0) / 150) * (movedIds.has(attacker.id) ? 0.5 : 1) * 100 / (100 + defense.defense) * (1 - (target.entrenchment ?? 0) * 0.3) * (UNIT_PROFILES[target.kind].airborne ? 1 : 1 - terrainCover(target, terrain)) * firingTime;
     incoming[j] += damage / defense.durability * 100;
     pressure[j] += (attacker.kind === "artillery" ? 4 : 1.5) * firingTime;
     spent[i] = p.firingCost * firingTime;

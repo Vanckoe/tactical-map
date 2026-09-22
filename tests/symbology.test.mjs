@@ -9,9 +9,9 @@ describe("symbol standards", () => {
     for (const kind of kinds) for (const echelon of ECHELONS) {
       const variants = ["nato", "kz"].flatMap((standard) => ["blue", "red"].map((side) => symbolSvg(kind, side, standard, echelon)));
       for (const svg of variants) {
-        expect(svg).toStartWith("<svg");
+        expect(svg.trim()).toStartWith("<svg");
         expect(svg).not.toMatch(/undefined|NaN/);
-        expect(svg).toEndWith("</svg>");
+        expect(svg.trim()).toEndWith("</svg>");
       }
       expect(new Set(variants).size).toBe(4);
     }

@@ -1,5 +1,6 @@
 "use client";
 import dynamic from "next/dynamic";
+import { BattleStatus } from "@/components/workspace/battle-status";
 import { StandardSwitch } from "@/components/symbology/standard-switch";
 import { useState, type CSSProperties } from "react";
 import {
@@ -69,6 +70,9 @@ function Workspace() {
       className={`map-workspace ${game.command || game.placing ? "choosing-point" : ""}`}
     >
       <TacticalMap
+        scenario={game.scenario}
+        points={game.battle.points}
+        releasedReserves={game.battle.releasedReserves}
         units={game.units}
         selected={game.selected}
         onSelect={selectUnit}
@@ -134,6 +138,7 @@ function Workspace() {
           <LayerMenu game={game} />
         </div>
       </header>
+      <BattleStatus game={game} />
       <ForcesSidebar
         game={game}
         onCreate={() => setPanel("create")}
@@ -180,7 +185,7 @@ function Workspace() {
               size="icon-lg"
               variant="ghost"
               aria-label="К району операции"
-              onClick={() => setFocus([...regions[game.region]])}
+              onClick={() => setFocus(game.scenario?.center ?? [...regions[game.region]])}
             >
               <LocateFixed />
             </Button>
@@ -249,7 +254,7 @@ function Workspace() {
       </div>
       <div className="map-caption">
         <span className="size-1.5 rounded-full bg-emerald-600" />
-        Песочница<span className="text-neutral-400">/</span>Условная обстановка
+        {game.scenario ? "Учебная местность" : "Песочница"}<span className="text-neutral-400">/</span>Условная обстановка
       </div>
       {game.toast && (
         <div className="workspace-toast floating-surface" role="status">

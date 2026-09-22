@@ -15,6 +15,6 @@ export function UnitStats({ kind, echelon }: { kind: Kind; echelon: Echelon }) {
   return <div className="space-y-3">
     <p className="text-xs leading-relaxed">{UNIT_PROFILES[kind].description}</p>
     <dl className="space-y-2">{rows.map(([label, value]) => <div className="flex items-center justify-between gap-3 text-xs" key={label}><dt className="text-muted-foreground">{label}</dt><dd className="text-right tabular-nums text-foreground">{value}</dd></div>)}</dl>
-    <p className="text-[10px] leading-relaxed text-muted-foreground">Размер части меняет мощь, прочность и запас ресурсов, но не дальность оружия. Круг на карте — {stats.supportKm ? "поддержка / РЭБ" : stats.rangeKm ? "дальность огня" : "обнаружение"}. Игровые значения; рельеф и погода пока не учитываются.</p>
+    <p className="text-[10px] leading-relaxed text-muted-foreground">Размер части меняет мощь, прочность и запас ресурсов, но не дальность оружия. Круг на карте — {stats.supportKm ? "поддержка / РЭБ" : stats.rangeKm ? "дальность огня" : "обнаружение"}. Игровые значения. В сценариях учебная местность влияет на скорость и укрытие; погода не учитывается.</p>
   </div>;
 }
