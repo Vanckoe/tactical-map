@@ -1,6 +1,5 @@
 "use client";
 import dynamic from "next/dynamic";
-import { BattleStatus } from "@/components/workspace/battle-status";
 import { StandardSwitch } from "@/components/symbology/standard-switch";
 import { useState, type CSSProperties } from "react";
 import {
@@ -138,7 +137,6 @@ function Workspace() {
           <LayerMenu game={game} />
         </div>
       </header>
-      <BattleStatus game={game} />
       <ForcesSidebar
         game={game}
         onCreate={() => setPanel("create")}

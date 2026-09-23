@@ -9,12 +9,12 @@ export function BattleStatus({ game }: { game: Sandbox }) {
   const defender = attack ? "Противник" : "Свои";
   const nextReserve = scenario.reserves.find((wave) => !battle.releasedReserves.includes(wave.id));
   const result = battle.winner === "blue" ? "Победа" : "Победил противник";
-  return <section className={`battle-status floating-surface ${battle.winner ? "battle-ended" : ""}`} aria-label="Состояние сценария">
-    <div className="flex items-center justify-between gap-3 text-xs"><strong>{battle.winner ? result : attack ? "Ваша задача: занять город" : "Ваша задача: удержать город"}</strong><span>{game.botEnabled ? "Бот включён" : "Бот выключен"}</span></div>
-    <p className="mt-2 flex justify-between gap-4 text-sm tabular-nums"><span>До конца <strong>{time(Math.max(0, scenario.timeLimitSeconds - battle.seconds))}</strong></span><span>Захват <strong>{time(battle.cityHeldSeconds)} / {time(scenario.holdSeconds)}</strong></span></p>
+  return <section className="space-y-4" aria-label="Состояние сценария">
+    <div className="flex flex-col gap-2 text-sm"><strong>{battle.winner ? result : attack ? "Ваша задача: занять город" : "Ваша задача: удержать город"}</strong><span>{game.botEnabled ? "Бот включён" : "Бот выключен"}</span></div>
+    <p className="mt-2 flex flex-col gap-2 text-sm tabular-nums"><span>До конца <strong>{time(Math.max(0, scenario.timeLimitSeconds - battle.seconds))}</strong></span><span>Захват <strong>{time(battle.cityHeldSeconds)} / {time(scenario.holdSeconds)}</strong></span></p>
     <div className="mt-2 text-xs">{scenario.objectives.map((o) => <span key={o.id}>{o.name}: {battle.points[o.id]?.contested ? "бой за контроль" : battle.points[o.id]?.owner === "blue" ? "под вашим контролем" : "под контролем противника"}</span>)}</div>
     <p className="mt-2 text-xs text-muted-foreground">{nextReserve ? `Резерв обороны через ${time(Math.max(0, nextReserve.releaseSeconds - battle.seconds))}` : "Все резервы обороны введены"}</p>
-    <details className="mt-2 max-h-[45vh] overflow-y-auto text-xs leading-5"><summary className="cursor-pointer">Обстановка и резервы</summary>
+    <details className="mt-2 text-xs leading-5"><summary className="cursor-pointer">Обстановка и резервы</summary>
       <p className="mt-2">{scenario.description}</p>
       <ul className="my-2 space-y-1">{scenario.reserves.map((wave) => <li key={wave.id}>{defender} · {wave.name}: {battle.releasedReserves.includes(wave.id) ? "введён в тылу" : `через ${time(Math.max(0, wave.releaseSeconds - battle.seconds))}`} · {wave.units.length} части</li>)}</ul>
       <p>Наступающим нужно занять город и непрерывно удерживать его 15 минут с боевой частью внутри. Присутствие обороны или уход наступающих сбрасывает отсчёт. Смена контроля занимает до 30 секунд. Оборона побеждает по истечении {scenario.timeLimitSeconds / 60} минут или при потере всех наземных боевых частей наступления.</p>
