@@ -156,12 +156,22 @@ export default function TacticalMap({
     const g = group.current;
     if (!g) return;
     g.clearLayers();
+    if (scenario?.borderPatrol) {
+      const { territory, entry, outposts } = scenario.borderPatrol;
+      L.rectangle([[territory.south, territory.west], [territory.north, territory.east]], {
+        color: "#987838", weight: 2, dashArray: "8 6", fill: false, interactive: false,
+      }).addTo(g);
+      L.circleMarker([entry.lat, entry.lng], { radius: 5, color: "#987838", interactive: false })
+        .addTo(g).bindTooltip(t("Сообщение: пересечение у ЖД"), { permanent: true, direction: "top" });
+      outposts.forEach((post) => L.circleMarker([post.lat, post.lng], { radius: 4, color: affiliationColor(standard, "blue"), interactive: false })
+        .addTo(g));
+    }
     scenario?.terrain.forEach((zone) => {
       L.circle([zone.lat, zone.lng], { radius: zone.radiusKm * 1000, color: zone.type === "water" ? "#377ea5" : zone.type === "urban" ? "#9b7185" : "#987838", weight: 1, fillOpacity: 0.2, dashArray: zone.type === "water" ? undefined : "4 4" }).addTo(g).bindTooltip(t(zone.label));
     });
     scenario?.objectives.forEach((objective) => {
       const state = points[objective.id];
-      const label = `${objective.name} · ${state?.contested ? "Оспаривается" : state?.owner === "blue" ? "Свои" : state?.owner === "red" ? "Противник" : "Нейтральная"}`;
+      const label = scenario.borderPatrol ? `${objective.name} · ${t("Цель нарушителя")}` : `${objective.name} · ${state?.contested ? "Оспаривается" : state?.owner === "blue" ? "Свои" : state?.owner === "red" ? "Противник" : "Нейтральная"}`;
       L.circle([objective.lat, objective.lng], { radius: objective.radiusKm * 1000, color: state?.owner ? affiliationColor(standard, state.owner) : "#565656", weight: 2, fillOpacity: 0.08 }).addTo(g).bindTooltip(t(label), { permanent: true, direction: "center" });
     });
     scenario?.reserves.filter((wave) => !releasedReserves.includes(wave.id)).forEach((wave, index) => {
@@ -188,7 +198,7 @@ export default function TacticalMap({
           .on("click", () => handlers.current.onSelect(u.id));
         if (active && u.hp > 0)
           L.circle([u.lat, u.lng], {
-            radius: (getUnitStats(u).supportKm || getUnitStats(u).rangeKm || getUnitStats(u).detectionKm) * 1000,
+            radius: (scenario?.borderPatrol ? scenario.borderPatrol.captureRadiusKm : getUnitStats(u).supportKm || getUnitStats(u).rangeKm || getUnitStats(u).detectionKm) * 1000,
             color: affiliationColor(standard, u.side, u.kind),
             weight: 1,
             dashArray: "5 7",
@@ -206,7 +216,7 @@ export default function TacticalMap({
   }, [units, selected, routes, enemies, standard, scenario, points, releasedReserves, t]);
   useEffect(() => {
     if (scenario && focus[0] === scenario.center[0] && focus[1] === scenario.center[1]) {
-      const positions = [...scenario.units, ...scenario.reserves.flatMap((wave) => wave.units)];
+      const positions = [...scenario.units, ...scenario.objectives, ...scenario.reserves.flatMap((wave) => wave.units)];
       map.current?.fitBounds(L.latLngBounds(positions.map((u) => [u.lat, u.lng])), { paddingTopLeft: [window.innerWidth > 900 ? 360 : 60, 180], paddingBottomRight: [150, 130], maxZoom: 12 });
     } else map.current?.flyTo(focus, scenario ? 12 : 10, { duration: 0.8 });
   }, [focus, scenario]);

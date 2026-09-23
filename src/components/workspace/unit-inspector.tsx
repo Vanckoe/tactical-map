@@ -93,7 +93,7 @@ export function UnitInspector({
               <LocateFixed />{t("Показать на карте")}</DropdownMenuItem>
             <DropdownMenuItem
               variant="destructive"
-              disabled={(game.botEnabled && u.side === "red") || !!game.battle.winner}
+              disabled={!!game.scenario?.borderPatrol || (game.botEnabled && u.side === "red") || !!game.battle.winner}
               onSelect={game.removeSelectedUnit}
             >
               <Trash2 />{t("Удалить соединение")}</DropdownMenuItem>
@@ -126,7 +126,7 @@ export function UnitInspector({
         >
           <Shield />{t("Удерживать")}</Button>
         <Button
-          disabled={u.hp <= 0 || UNIT_PROFILES[u.kind].damagePerSecond === 0 || (game.botEnabled && u.side === "red") || !!game.battle.winner}
+          disabled={!!game.scenario?.borderPatrol || u.hp <= 0 || UNIT_PROFILES[u.kind].damagePerSecond === 0 || (game.botEnabled && u.side === "red") || !!game.battle.winner}
           variant="outline"
           className="h-14 flex-col gap-1 text-[11px]"
           onClick={() => move(true)}
@@ -136,7 +136,7 @@ export function UnitInspector({
       <div className="space-y-3 p-4">
         {[
           { label: "Боеспособность", value: u.hp },
-          { label: "Снабжение", value: u.supply },
+          ...(game.scenario?.supplyDisabled ? [] : [{ label: "Снабжение", value: u.supply }]),
         ].map((s) => (
           <div key={s.label}>
             <div className="mb-1.5 flex justify-between text-[11px]">
@@ -146,12 +146,14 @@ export function UnitInspector({
             <Progress value={s.value} className="h-1" />
           </div>
         ))}
+        {game.scenario?.supplyDisabled && <p className="text-xs text-muted-foreground">{t("Снабжение отключено для всех сторон")}</p>}
       </div>
       <Accordion type="single" collapsible className="border-t px-4">
         <AccordionItem value="stats">
           <AccordionTrigger className="py-3 text-xs font-normal">{t("Боевые характеристики")}</AccordionTrigger>
           <AccordionContent>
-            <UnitStats kind={u.kind} echelon={u.echelon} />
+            {game.scenario?.borderPatrol && <p className="mb-3 text-xs">{t("Для задержания подведите любой взвод к нарушителю на 600 м. Стрельба отключена. Нарушитель побеждает при входе в отмеченную зону Петропавла; удерживать город не требуется.")}</p>}
+            <UnitStats kind={u.kind} echelon={u.echelon} supplyDisabled={game.scenario?.supplyDisabled} />
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="details" className="border-0">

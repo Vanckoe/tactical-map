@@ -8,6 +8,12 @@ export type Scenario = {
   id: string; name: string; region: string; description: string; center: [number, number];
   terrain: TerrainZone[]; objectives: Objective[]; units: Unit[]; reserves: ReserveWave[];
   redBase: Position; blueBase: Position; attackerSide: Unit["side"]; timeLimitSeconds: number; holdSeconds: number;
+  supplyDisabled?: boolean;
+  borderPatrol?: {
+    intruderId: string; entry: Position; captureRadiusKm: number; detectionRadiusKm: number;
+    territory: { south: number; north: number; west: number; east: number };
+    outposts: (Position & { name: string })[];
+  };
 };
 // Offsets and forces describe fictional game situations, not actual deployments or terrain surveys.
 type Deployment = [Kind, Echelon, number, number];
@@ -52,10 +58,39 @@ function createScenario(id: string, city: string, center: [number, number], atta
     ],
   };
 }
+function createBorderPatrol(): Scenario {
+  const city = { lat: 54.8734, lng: 69.1507 };
+  const outposts = [
+    { name: "Афонькино", lat: 54.9066, lng: 68.2699 },
+    { name: "Белое", lat: 55.0628, lng: 68.4739 },
+    { name: "Мамлют", lat: 54.9411, lng: 68.5462 },
+  ];
+  const start = { lat: 55.005, lng: 68.18 };
+  return {
+    id: "petropavl-border", name: "Петропавл · Пограничный поиск", region: "Петропавл",
+    center: [city.lat, city.lng], attackerSide: "red", blueBase: outposts[2], redBase: start,
+    timeLimitSeconds: 3 * 60 * 60, holdSeconds: 0, supplyDisabled: true,
+    description: "От пограничников РФ поступило сообщение: человек незаконно пересёк границу на линии железной дороги. В игре нарушитель представлен одним отделением мотопехоты. На заставах Афонькино, Белое и Мамлют — по три взвода мотопехоты. Задержите нарушителя до его прибытия в Петропавл. Снабжение и огонь отключены. Граница и место входа условные, для игровой механики.",
+    borderPatrol: {
+      intruderId: "10", entry: { lat: 55.005, lng: 68.23 }, captureRadiusKm: 0.6, detectionRadiusKm: 5,
+      territory: { south: 54.7, north: 55.15, west: 68.21, east: 69.4 }, outposts,
+    },
+    units: [
+      ...outposts.flatMap((base, i) => [-1, 0, 1].map((spread, j): Unit => ({
+        id: String(i * 3 + j + 1), name: `${base.name} · Взвод ${j + 1}`,
+        kind: "infantry", echelon: "Взвод", side: "blue", ...offset(base, spread * 0.45, j === 1 ? 0.4 : 0),
+        hp: 100, supply: 100, order: "Удержание",
+      }))),
+      { id: "10", name: "Нарушитель", kind: "infantry", echelon: "Отделение", side: "red", ...start, hp: 100, supply: 100, order: "К границе" },
+    ],
+    objectives: [{ id: "city", name: "Петропавл", ...city, radiusKm: 1.6 }], reserves: [], terrain: [],
+  };
+}
 export const SCENARIOS: Scenario[] = [
   createScenario("esik-attack", "Есик", [43.355, 77.462], "blue", [-27, 13], [10, 3], 120, 48, 0),
   createScenario("kaskelen-defense", "Каскелен", [43.202, 76.623], "red", [-24, 18], [9, 7], 115, 42, 1),
   createScenario("talgar-attack", "Талгар", [43.303, 77.239], "blue", [8, 29], [-11, 2], 125, 55, 2),
   createScenario("esik-defense", "Есик", [43.355, 77.462], "red", [-29, 8], [12, 4], 120, 50, 2),
+  createBorderPatrol(),
 ];
 export const getScenario = (id: string) => SCENARIOS.find((s) => s.id === id);

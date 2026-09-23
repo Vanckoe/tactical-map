@@ -8,6 +8,23 @@ export function BattleStatus({ game }: { game: Sandbox }) {
   const { t } = useI18n();
   const { scenario, battle } = game;
   if (!scenario) return null;
+  if (scenario.borderPatrol) {
+    const result = battle.borderOutcome === "captured" ? "Нарушитель задержан. Победа пограничников." : battle.borderOutcome === "escaped" ? "Нарушитель достиг Петропавла. Победа противника." : battle.borderOutcome === "timeout" ? "Время поиска истекло. Ничья: нарушитель не задержан и не достиг города." : "Ваша задача: задержать нарушителя";
+    return <section className="space-y-4 text-sm" aria-label={t("Состояние сценария")}>
+      <strong className="block" role="status">{t(result)}</strong>
+      <p>{t(game.botEnabled ? "Бот включён" : "Бот выключен")}</p>
+      <p className="tabular-nums">{t("До конца ")}<strong>{time(Math.max(0, scenario.timeLimitSeconds - battle.seconds))}</strong></p>
+      <p>{t(battle.borderEntered ? "Нарушитель вошёл в РК. Повторный выход запрещён." : "Нарушитель приближается к игровой границе по линии ЖД.")}</p>
+      <p className="text-xs text-muted-foreground">{t("Снабжение отключено для всех сторон")}</p>
+      <p className="text-xs leading-5">{t("Для задержания подведите любой взвод к нарушителю на 600 м. Стрельба отключена. Нарушитель побеждает при входе в отмеченную зону Петропавла; удерживать город не требуется.")}</p>
+      <details className="text-xs leading-5"><summary className="cursor-pointer">{t("Обстановка и правила")}</summary>
+        <p className="mt-2">{t(scenario.description)}</p>
+        <ul className="mt-2 space-y-1">{scenario.borderPatrol.outposts.map((post) => <li key={post.name}>{t(post.name)} — {t("3 взвода мотопехоты")}</li>)}</ul>
+        <p className="mt-2">{t("Игровая граница условная. После первого входа нарушитель остаётся внутри отмеченной территории. Лимит поиска — 180 игровых минут.")}</p>
+      </details>
+      {battle.winner && <Button className="w-full" size="sm" onClick={game.reset}>{t("Начать заново")}</Button>}
+    </section>;
+  }
   const attack = scenario.attackerSide === "blue";
   const defender = attack ? "Противник" : "Свои";
   const nextReserve = scenario.reserves.find((wave) => !battle.releasedReserves.includes(wave.id));

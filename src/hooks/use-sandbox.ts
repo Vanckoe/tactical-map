@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { isWorkspaceShortcut } from "@/lib/keyboard";
+import { insideTerritory } from "@/lib/border-patrol";
 import { initialUnits, kinds, Kind, Unit } from "@/lib/simulation";
 import { newBattle, tickBattle } from "@/lib/battle";
 import { getScenario } from "@/lib/scenarios";
@@ -15,6 +16,7 @@ export const regions: Record<string, [number, number]> = {
   Шымкент: [42.32, 69.59],
   Бишкек: [42.87, 74.6],
   Ташкент: [41.3, 69.24],
+  Петропавл: [54.8734, 69.1507],
 };
 export function useSandbox() {
   const [focus, setFocus] = useState<[number, number]>(
@@ -49,12 +51,12 @@ export function useSandbox() {
   const [mode, setMode] = useState("sandbox");
   const unit = units.find((u) => u.id === selected);
   const removeSelectedUnit = useCallback(() => {
-    if (!unit || battle.winner || (botEnabled && unit.side === "red")) return;
+    if (!unit || scenario?.borderPatrol || battle.winner || (botEnabled && unit.side === "red")) return;
     setBattle((old) => ({ ...old, units: old.units.filter((u) => u.id !== unit.id) }));
     setSelected("");
     setCommand(false);
     setLogs((logs) => [`Удалено: ${unit.name}`, ...logs].slice(0, 30));
-  }, [unit, battle.winner, botEnabled]);
+  }, [unit, battle.winner, botEnabled, scenario]);
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
       if (!isWorkspaceShortcut(event) || event.repeat) return;
@@ -103,6 +105,7 @@ export function useSandbox() {
     setLogs((l) => [message, ...l].slice(0, 30));
   }
   function onMapClick(lat: number, lng: number, shiftKey = false) {
+    if (scenario?.borderPatrol && battle.borderEntered && command && unit?.side === "red" && !insideTerritory({ lat, lng }, scenario)) { setToast("После входа выход за игровую границу запрещён."); return; }
     if (placing && scenario) { setToast("Состав сил задан сценарием. Для размещения выберите свободную песочницу."); return; }
     if (battle.winner) { setToast("Сценарий завершён. Начните заново через меню сценария."); return; }
     if (botEnabled && ((placing && side === "red") || (command && unit?.side === "red"))) { setToast("Противником управляет бот. Отключите бота для ручного управления."); return; }
@@ -202,12 +205,19 @@ export function useSandbox() {
       setPlacing(false);
       setCommand(false);
       const saved = data.battle;
+      const loadedScenario = getScenario(saved?.scenarioId);
+      if (loadedScenario?.borderPatrol && (
+        typeof saved.borderEntered !== "boolean" ||
+        ![undefined, "captured", "escaped", "timeout"].includes(saved.borderOutcome) ||
+        data.units.filter((u: Unit) => u.id === loadedScenario.borderPatrol!.intruderId && u.side === "red").length !== 1 ||
+        (saved.borderEntered && !insideTerritory(data.units.find((u: Unit) => u.id === loadedScenario.borderPatrol!.intruderId), loadedScenario))
+      )) throw Error();
       if (saved && (!Number.isInteger(saved.cityHeldSeconds) || saved.cityHeldSeconds < 0 || !Array.isArray(saved.releasedReserves) || new Set(saved.releasedReserves).size !== saved.releasedReserves.length || !saved.releasedReserves.every((id: unknown) => getScenario(saved.scenarioId)?.reserves.some((wave) => wave.id === id && wave.releaseSeconds <= data.seconds)) || !saved.points || typeof saved.points !== "object" || !Object.values(saved.points).every((point) => {
         const p = point as { owner: string | null; progress: number; contested: boolean };
         return p && [null, "blue", "red"].includes(p.owner) && Number.isFinite(p.progress) && Math.abs(p.progress) <= 15 && typeof p.contested === "boolean";
       }) || ![undefined, "blue", "red", "draw"].includes(saved.winner) || !(saved.scenarioId === "sandbox" || getScenario(saved.scenarioId)))) throw Error();
       if (!Number.isInteger(data.seconds) || data.seconds < 0) throw Error();
-      setBattle({ ...newBattle(data.units, saved?.scenarioId ?? "sandbox"), seconds: data.seconds, ...(saved ? { cityHeldSeconds: saved.cityHeldSeconds, releasedReserves: saved.releasedReserves, points: saved.points, winner: saved.winner } : {}) });
+      setBattle({ ...newBattle(data.units, saved?.scenarioId ?? "sandbox"), seconds: data.seconds, ...(saved ? { cityHeldSeconds: saved.cityHeldSeconds, releasedReserves: saved.releasedReserves, points: saved.points, winner: saved.winner, borderEntered: saved.borderEntered, borderOutcome: saved.borderOutcome } : {}) });
       setBotEnabled(data.botEnabled === true && !!getScenario(saved?.scenarioId));
       setRegion(data.region);
       setFocus(getScenario(saved?.scenarioId)?.center ?? [...regions[data.region]]);
@@ -228,7 +238,7 @@ export function useSandbox() {
     setRegion(chosen?.region ?? "Алматинская область");
     setFocus(chosen?.center ?? [...regions["Алматинская область"]]);
     setSelected(""); setPlacing(false); setCommand(false); setRunning(false); setSide("blue"); setModal("");
-    setLogs([chosen ? `${chosen.name}: ${chosen.attackerSide === "blue" ? "Займите город и удерживайте его 15 минут" : "Удержите город до истечения времени"}. Резервы вводятся по расписанию. Противником управляет бот.` : "Песочница готова"]);
+    setLogs([chosen?.borderPatrol ? chosen.description : chosen ? `${chosen.name}: ${chosen.attackerSide === "blue" ? "Займите город и удерживайте его 15 минут" : "Удержите город до истечения времени"}. Резервы вводятся по расписанию. Противником управляет бот.` : "Песочница готова"]);
   }
   function reset() { selectScenario(battle.scenarioId); }
   const time = `${String(6 + Math.floor(seconds / 3600)).padStart(2, "0")}:${String(Math.floor(seconds / 60) % 60).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;

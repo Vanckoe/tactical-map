@@ -1,7 +1,7 @@
 "use client";
 import { useI18n } from "@/components/i18n/language-provider";
 import { getUnitStats, UNIT_PROFILES, type Kind, type Echelon } from "@/lib/unit-balance";
-export function UnitStats({ kind, echelon }: { kind: Kind; echelon: Echelon }) {
+export function UnitStats({ kind, echelon, supplyDisabled = false }: { kind: Kind; echelon: Echelon; supplyDisabled?: boolean }) {
   const { t } = useI18n();
   const stats = getUnitStats({ kind, echelon });
   const rows = [
@@ -13,7 +13,7 @@ export function UnitStats({ kind, echelon }: { kind: Kind; echelon: Echelon }) {
     ["Защита", `${stats.defense} (−${Math.round(stats.defense / (100 + stats.defense) * 100)}% урона)`],
     ["Скорость", `${stats.speedKph} км/ч`],
     ["Прочность", `${stats.durability} ед.`],
-    ["Запас ресурсов", `${stats.supplyCapacity} ед.`],
+    ...(supplyDisabled ? [] : [["Запас ресурсов", `${stats.supplyCapacity} ед.`]]),
   ];
   return <div className="space-y-3">
     <p className="text-xs leading-relaxed">{t(UNIT_PROFILES[kind].description)}</p>

@@ -134,11 +134,14 @@ export const initialUnits: Unit[] = [
 ];
 export { symbolSvg } from "./symbology";
 /** One-second phases keep 50× identical to fifty 1× updates. */
-export function tickUnits(units: Unit[], elapsedSeconds: number, terrain: TerrainZone[] = []): Unit[] {
+export type SimulationRules = { supplyDisabled?: boolean; combatDisabled?: boolean };
+export function tickUnits(units: Unit[], elapsedSeconds: number, terrain: TerrainZone[] = [], rules: SimulationRules = {}): Unit[] {
   if (!Number.isFinite(elapsedSeconds) || elapsedSeconds <= 0) return units;
   let next = units;
   for (let remaining = elapsedSeconds; remaining > 0; remaining -= Math.min(1, remaining)) {
-    next = stepUnits(next, Math.min(1, remaining), terrain);
+    const available = rules.supplyDisabled ? next.map((u) => ({ ...u, supply: 100 })) : next;
+    next = stepUnits(available, Math.min(1, remaining), terrain, rules);
+    if (rules.supplyDisabled) next = next.map((u) => ({ ...u, supply: 100 }));
   }
   return next;
 }
@@ -156,7 +159,7 @@ export function detectedBySide(target: Unit, side: Unit["side"], units: Unit[], 
     return distanceKm(observer, target) <= range * (disrupted.has(observer.id) ? 0.4 : 1);
   });
 }
-function stepUnits(units: Unit[], dt: number, terrain: TerrainZone[]): Unit[] {
+function stepUnits(units: Unit[], dt: number, terrain: TerrainZone[], rules: SimulationRules): Unit[] {
   const movedIds = new Set<string>();
   const disruptedBefore = new Set(units.filter((u) => jammed(u, units)).map((u) => u.id));
   const contacts = new Set(units.filter((u) => u.hp > 0 && detectedBySide(u, u.side === "blue" ? "red" : "blue", units, disruptedBefore)).map((u) => u.id));
@@ -164,7 +167,7 @@ function stepUnits(units: Unit[], dt: number, terrain: TerrainZone[]): Unit[] {
     if (u.hp <= 0) return { ...u };
     const p = UNIT_PROFILES[u.kind];
     const next = { ...u, order: "Удержание", stationarySeconds: Math.min(3600, (u.stationarySeconds ?? 0) + dt), suppression: clamp((u.suppression ?? 0) - dt * 0.8), entrenchment: u.entrenchment ?? 0, recoverableHp: u.recoverableHp ?? 0 };
-    const contact = u.advance && units.some((other) => other.side !== u.side && other.hp > 0 && contacts.has(other.id) && damageMultiplier(u.kind, other.kind) > 0 && distanceKm(u, other) <= p.rangeKm && distanceKm(u, other) >= p.minRangeKm);
+    const contact = !rules.combatDisabled && u.advance && units.some((other) => other.side !== u.side && other.hp > 0 && contacts.has(other.id) && damageMultiplier(u.kind, other.kind) > 0 && distanceKm(u, other) <= p.rangeKm && distanceKm(u, other) >= p.minRangeKm);
     if (contact) { next.target = undefined; next.route = undefined; next.advance = false; }
     if (next.target && u.supply > 0) {
       const route = next.route ?? planRoute(u, { lat: next.target[0], lng: next.target[1] }, terrain, p.airborne);
@@ -189,6 +192,7 @@ function stepUnits(units: Unit[], dt: number, terrain: TerrainZone[]): Unit[] {
     if (next.supply === 0) next.order = "Нет снабжения";
     return next;
   });
+  if (rules.combatDisabled) return moved;
   const disrupted = new Set(moved.filter((u) => jammed(u, moved)).map((u) => u.id));
   const detected = new Set(moved.filter((u) => u.hp > 0 && detectedBySide(u, u.side === "blue" ? "red" : "blue", moved, disrupted)).map((u) => u.id));
   const incoming = moved.map(() => 0), pressure = moved.map(() => 0), spent = moved.map(() => 0);

@@ -3,12 +3,14 @@ import { UNIT_PROFILES, damageMultiplier } from "./unit-balance";
 import { distanceKm, moveToward, type Position } from "./geo";
 import { planRoute } from "./terrain";
 import { getScenario, type Scenario } from "./scenarios";
+import { insideTerritory, tickBorderPatrol } from "./border-patrol";
 export type PointState = { owner: "blue" | "red" | null; progress: number; contested: boolean };
-export type Battle = { units: Unit[]; seconds: number; scenarioId: string; points: Record<string, PointState>; cityHeldSeconds: number; releasedReserves: string[]; winner?: "blue" | "red" | "draw" };
+export type Battle = { units: Unit[]; seconds: number; scenarioId: string; points: Record<string, PointState>; cityHeldSeconds: number; releasedReserves: string[]; winner?: "blue" | "red" | "draw"; borderEntered?: boolean; borderOutcome?: "captured" | "escaped" | "timeout"; lastKnownIntruder?: Position & { seconds: number } };
 export function newBattle(units: Unit[], scenarioId = "sandbox"): Battle {
   const scenario = getScenario(scenarioId);
   const defender = scenario?.attackerSide === "blue" ? "red" : "blue";
-  return { units: units.map((u) => ({ ...u })), scenarioId, seconds: 0, cityHeldSeconds: 0, releasedReserves: [],
+  return { units: units.map((u) => ({ ...u, supply: scenario?.supplyDisabled ? 100 : u.supply })), scenarioId, seconds: 0, cityHeldSeconds: 0, releasedReserves: [],
+    ...(scenario?.borderPatrol ? { borderEntered: units.some((u) => u.id === scenario.borderPatrol!.intruderId && insideTerritory(u, scenario)) } : {}),
     points: Object.fromEntries((scenario?.objectives ?? []).map((o) => [o.id, { owner: defender, progress: defender === "blue" ? 15 : -15, contested: false }])) };
 }
 const canCapture = (u: Unit) => u.hp > 0 && u.supply > 0 && !UNIT_PROFILES[u.kind].airborne && UNIT_PROFILES[u.kind].damagePerSecond > 0;
@@ -65,6 +67,10 @@ export function tickBattle(state: Battle, elapsed: number, botEnabled: boolean):
   let next = state;
   const scenario = getScenario(state.scenarioId);
   for (let second = 0; second < elapsed && !next.winner; second++) {
+    if (scenario?.borderPatrol) {
+      next = tickBorderPatrol(next, scenario, botEnabled);
+      continue;
+    }
     const seconds = next.seconds + 1;
     const releasedReserves = [...next.releasedReserves];
     let available = next.units;
@@ -75,7 +81,7 @@ export function tickBattle(state: Battle, elapsed: number, botEnabled: boolean):
       }
     }
     const commanded = botEnabled && scenario && (next.seconds % 10 === 0 || available !== next.units) ? commandEnemy(available, scenario, next.points) : available;
-    const units = tickUnits(commanded, 1, scenario?.terrain);
+    const units = tickUnits(commanded, 1, scenario?.terrain, { supplyDisabled: scenario?.supplyDisabled });
     const points = { ...next.points };
     if (scenario) for (const objective of scenario.objectives) {
       const present = units.filter((u) => canCapture(u) && distanceKm(u,objective) <= objective.radiusKm);

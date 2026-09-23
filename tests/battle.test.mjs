@@ -38,7 +38,7 @@ test("bot issues orders only to the red side and uses no hidden enemies", () => 
   expect(commandEnemy([...red,hidden],scenario,{}).filter((u)=>u.side==="red")).toEqual(commandEnemy(red,scenario,{}));
 });
 test("asymmetric forces start far apart with a small prepared garrison", () => {
-  for (const scenario of SCENARIOS) {
+  for (const scenario of SCENARIOS.filter((s) => !s.borderPatrol)) {
     const attackers = scenario.units.filter((u) => u.side === scenario.attackerSide);
     const defenders = scenario.units.filter((u) => u.side !== scenario.attackerSide);
     expect(attackers.length).toBeGreaterThan(defenders.length);
@@ -82,14 +82,14 @@ test("capture needs continuous occupation; leaving and contesting reset the hold
   expect(tickBattle(won, 50, true)).toBe(won);
 });
 test("defenders win at the deadline, never from passive control before it", () => {
-  for (const scenario of SCENARIOS) {
+  for (const scenario of SCENARIOS.filter((s) => !s.borderPatrol)) {
     const state = {...newBattle(scenario.units, scenario.id), seconds: scenario.timeLimitSeconds - 2};
     expect(tickBattle(state, 1, false).winner).toBeUndefined();
     expect(tickBattle(state, 2, false).winner).toBe(scenario.attackerSide === "blue" ? "red" : "blue");
   }
 });
 test("defending AI preserves garrison positions while attacking AI advances", () => {
-  for (const scenario of SCENARIOS) {
+  for (const scenario of SCENARIOS.filter((s) => !s.borderPatrol)) {
     const state = newBattle(scenario.units, scenario.id);
     const commanded = commandEnemy(state.units, scenario, state.points);
     const red = commanded.filter((u) => u.side === "red");
@@ -105,7 +105,7 @@ test("scenario AI and reserve release are independent of playback speed", () => 
 });
 
 test("an attacking bot completes the march and defeats an idle defender", () => {
-  for (const scenario of SCENARIOS.filter((s) => s.attackerSide === "red")) {
+  for (const scenario of SCENARIOS.filter((s) => !s.borderPatrol && s.attackerSide === "red")) {
     const result = tickBattle(newBattle(scenario.units, scenario.id), scenario.timeLimitSeconds, true);
     expect(result.winner).toBe("red");
     expect(result.cityHeldSeconds).toBe(scenario.holdSeconds);
