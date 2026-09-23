@@ -155,6 +155,10 @@ button:disabled {
 .map-canvas .leaflet-tile-pane {
   filter: saturate(0.55);
 }
+.unit-marker.contact-lost {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
 .map-canvas.with-grid:after {
   content: "";
   position: absolute;

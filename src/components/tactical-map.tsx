@@ -4,7 +4,7 @@ import { useI18n } from "@/components/i18n/language-provider";
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { Unit } from "@/lib/simulation";
+import type { ObservedUnit } from "@/lib/border-patrol";
 import { symbolSvg, affiliationColor } from "@/lib/symbology";
 import { useSymbolStandard } from "@/components/symbology/symbol-provider";
 import { echelonLabel, getUnitStats } from "@/lib/unit-balance";
@@ -15,7 +15,7 @@ type Props = {
   scenario?: Scenario;
   points: Battle["points"];
   releasedReserves: string[];
-  units: Unit[];
+  units: ObservedUnit[];
   selected: string;
   onSelect: (id: string) => void;
   onMapClick: (lat: number, lng: number, shiftKey: boolean) => void;
@@ -185,10 +185,10 @@ export default function TacticalMap({
       .forEach((u) => {
         const active = u.id === selected;
         L.marker([u.lat, u.lng], {
-          title: t(u.name),
-          alt: t(u.name),
+          title: t(u.contactLost ? `${u.name} · Контакт потерян` : u.name),
+          alt: t(u.contactLost ? `${u.name} · Контакт потерян` : u.name),
           icon: L.divIcon({
-            className: `unit-marker ${active ? "selected" : ""} ${u.hp <= 0 ? "disabled" : ""}`,
+            className: `unit-marker ${active ? "selected" : ""} ${u.hp <= 0 ? "disabled" : ""} ${u.contactLost ? "contact-lost" : ""}`,
             html: `${symbolSvg(u.kind, u.side, standard, u.echelon)}<span>${u.id.padStart(2, "0")} / ${t(echelonLabel(u.kind, u.echelon))}</span>`,
             iconSize: [56, 59],
             iconAnchor: [28, 27],
@@ -196,7 +196,13 @@ export default function TacticalMap({
         })
           .addTo(g)
           .on("click", () => handlers.current.onSelect(u.id));
-        if (active && u.hp > 0)
+        if (active && u.hp > 0 && u.side === "blue" && scenario?.borderPatrol)
+          L.circle([u.lat, u.lng], {
+            radius: scenario.borderPatrol.detectionRadiusKm * 1000,
+            color: affiliationColor(standard, u.side, u.kind),
+            weight: 1, fillOpacity: 0.035, interactive: false,
+          }).addTo(g);
+        if (active && u.hp > 0 && !u.contactLost && (!scenario?.borderPatrol || u.side === "blue"))
           L.circle([u.lat, u.lng], {
             radius: (scenario?.borderPatrol ? scenario.borderPatrol.captureRadiusKm : getUnitStats(u).supportKm || getUnitStats(u).rangeKm || getUnitStats(u).detectionKm) * 1000,
             color: affiliationColor(standard, u.side, u.kind),

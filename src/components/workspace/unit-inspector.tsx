@@ -74,7 +74,7 @@ export function UnitInspector({
       <div className="flex items-center justify-between px-4 pb-3">
         <Badge variant="secondary" className="font-normal">
           <span
-            className={`mr-1 size-1.5 rounded-full ${u.hp > 0 ? "bg-emerald-500" : "bg-red-500"}`}
+            className={`mr-1 size-1.5 rounded-full ${u.hp > 0 && !u.contactLost ? "bg-emerald-500" : "bg-red-500"}`}
           />
           {t(u.order)}
         </Badge>
@@ -102,14 +102,14 @@ export function UnitInspector({
       </div>
       <div className="grid grid-cols-3 gap-1.5 border-y p-3">
         <Button
-          disabled={u.hp <= 0 || (game.botEnabled && u.side === "red") || !!game.battle.winner}
+          disabled={u.contactLost || u.hp <= 0 || (game.botEnabled && u.side === "red") || !!game.battle.winner}
           variant={game.command ? "secondary" : "outline"}
           className="h-14 flex-col gap-1 text-[11px]"
           onClick={() => move()}
         >
           <MoveUpRight />{t("Движение")}</Button>
         <Button
-          disabled={u.hp <= 0 || (game.botEnabled && u.side === "red") || !!game.battle.winner}
+          disabled={u.contactLost || u.hp <= 0 || (game.botEnabled && u.side === "red") || !!game.battle.winner}
           variant="outline"
           className="h-14 flex-col gap-1 text-[11px]"
           onClick={() => {
@@ -153,7 +153,7 @@ export function UnitInspector({
           <AccordionTrigger className="py-3 text-xs font-normal">{t("Боевые характеристики")}</AccordionTrigger>
           <AccordionContent>
             {game.scenario?.borderPatrol && <p className="mb-3 text-xs">{t("Для задержания подведите любой взвод к нарушителю на 600 м. Стрельба отключена. Нарушитель побеждает при входе в отмеченную зону Петропавла; удерживать город не требуется.")}</p>}
-            <UnitStats kind={u.kind} echelon={u.echelon} supplyDisabled={game.scenario?.supplyDisabled} />
+            <UnitStats kind={u.kind} echelon={u.echelon} supplyDisabled={game.scenario?.supplyDisabled} detectionRadiusKm={u.side === "blue" ? game.scenario?.borderPatrol?.detectionRadiusKm : undefined} />
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="details" className="border-0">

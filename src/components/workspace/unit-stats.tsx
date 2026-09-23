@@ -1,12 +1,12 @@
 "use client";
 import { useI18n } from "@/components/i18n/language-provider";
 import { getUnitStats, UNIT_PROFILES, type Kind, type Echelon } from "@/lib/unit-balance";
-export function UnitStats({ kind, echelon, supplyDisabled = false }: { kind: Kind; echelon: Echelon; supplyDisabled?: boolean }) {
+export function UnitStats({ kind, echelon, supplyDisabled = false, detectionRadiusKm }: { kind: Kind; echelon: Echelon; supplyDisabled?: boolean; detectionRadiusKm?: number }) {
   const { t } = useI18n();
   const stats = getUnitStats({ kind, echelon });
   const rows = [
     ["Дальность огня", stats.rangeKm ? `${stats.minRangeKm ? `${stats.minRangeKm}–` : ""}${stats.rangeKm} км` : "Не ведёт огонь"],
-    ["Обнаружение", `${stats.detectionKm} км`],
+    ["Обнаружение", `${detectionRadiusKm ?? stats.detectionKm} км`],
     ...(stats.supportKm ? [[kind === "ew" ? "Радиус РЭБ" : "Радиус поддержки", `${stats.supportKm} км`]] : []),
     ["Развёртывание", stats.deploySeconds ? `${stats.deploySeconds} с` : "Без задержки"],
     ["Урон при 100%", `${stats.damagePerSecond} ед/с`],

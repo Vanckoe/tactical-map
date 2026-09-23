@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { isWorkspaceShortcut } from "@/lib/keyboard";
-import { insideTerritory } from "@/lib/border-patrol";
+import { insideTerritory, observedUnits } from "@/lib/border-patrol";
 import { initialUnits, kinds, Kind, Unit } from "@/lib/simulation";
 import { newBattle, tickBattle } from "@/lib/battle";
 import { getScenario } from "@/lib/scenarios";
@@ -49,14 +49,15 @@ export function useSandbox() {
     "Соединения развёрнуты на исходных позициях",
   ]);
   const [mode, setMode] = useState("sandbox");
-  const unit = units.find((u) => u.id === selected);
+  const visibleUnits = observedUnits(battle, scenario);
+  const unit = visibleUnits.find((u) => u.id === selected);
   const removeSelectedUnit = useCallback(() => {
     if (!unit || scenario?.borderPatrol || battle.winner || (botEnabled && unit.side === "red")) return;
     setBattle((old) => ({ ...old, units: old.units.filter((u) => u.id !== unit.id) }));
     setSelected("");
     setCommand(false);
     setLogs((logs) => [`Удалено: ${unit.name}`, ...logs].slice(0, 30));
-  }, [unit, battle.winner, botEnabled, scenario]);
+  }, [unit, battle.winner, botEnabled, scenario, setSelected, setCommand, setLogs]);
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
       if (!isWorkspaceShortcut(event) || event.repeat) return;
@@ -105,6 +106,7 @@ export function useSandbox() {
     setLogs((l) => [message, ...l].slice(0, 30));
   }
   function onMapClick(lat: number, lng: number, shiftKey = false) {
+    if (scenario?.borderPatrol && command && unit?.contactLost) return;
     if (scenario?.borderPatrol && battle.borderEntered && command && unit?.side === "red" && !insideTerritory({ lat, lng }, scenario)) { setToast("После входа выход за игровую границу запрещён."); return; }
     if (placing && scenario) { setToast("Состав сил задан сценарием. Для размещения выберите свободную песочницу."); return; }
     if (battle.winner) { setToast("Сценарий завершён. Начните заново через меню сценария."); return; }
@@ -206,6 +208,8 @@ export function useSandbox() {
       setCommand(false);
       const saved = data.battle;
       const loadedScenario = getScenario(saved?.scenarioId);
+      const contact = saved?.lastKnownIntruder;
+      if (contact !== undefined && (!contact || !Number.isFinite(contact.lat) || Math.abs(contact.lat) > 90 || !Number.isFinite(contact.lng) || Math.abs(contact.lng) > 180 || !Number.isInteger(contact.seconds) || contact.seconds < 0 || contact.seconds > data.seconds)) throw Error();
       if (loadedScenario?.borderPatrol && (
         typeof saved.borderEntered !== "boolean" ||
         ![undefined, "captured", "escaped", "timeout"].includes(saved.borderOutcome) ||
@@ -217,7 +221,7 @@ export function useSandbox() {
         return p && [null, "blue", "red"].includes(p.owner) && Number.isFinite(p.progress) && Math.abs(p.progress) <= 15 && typeof p.contested === "boolean";
       }) || ![undefined, "blue", "red", "draw"].includes(saved.winner) || !(saved.scenarioId === "sandbox" || getScenario(saved.scenarioId)))) throw Error();
       if (!Number.isInteger(data.seconds) || data.seconds < 0) throw Error();
-      setBattle({ ...newBattle(data.units, saved?.scenarioId ?? "sandbox"), seconds: data.seconds, ...(saved ? { cityHeldSeconds: saved.cityHeldSeconds, releasedReserves: saved.releasedReserves, points: saved.points, winner: saved.winner, borderEntered: saved.borderEntered, borderOutcome: saved.borderOutcome } : {}) });
+      setBattle({ ...newBattle(data.units, saved?.scenarioId ?? "sandbox"), seconds: data.seconds, ...(saved ? { cityHeldSeconds: saved.cityHeldSeconds, releasedReserves: saved.releasedReserves, points: saved.points, winner: saved.winner, borderEntered: saved.borderEntered, borderOutcome: saved.borderOutcome, lastKnownIntruder: saved.lastKnownIntruder } : {}) });
       setBotEnabled(data.botEnabled === true && !!getScenario(saved?.scenarioId));
       setRegion(data.region);
       setFocus(getScenario(saved?.scenarioId)?.center ?? [...regions[data.region]]);
@@ -247,6 +251,7 @@ export function useSandbox() {
     focus,
     setFocus,
     units,
+    visibleUnits,
     setUnits,
     selected,
     setSelected,

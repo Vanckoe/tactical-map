@@ -39,7 +39,7 @@ export function ForcesSidebar({
   const activeView = game.scenario ? view : "forces";
   const [query, setQuery] = useState("");
   const { toggleSidebar, setOpenMobile } = useSidebar();
-  const units = game.units.filter(
+  const units = game.visibleUnits.filter(
     (u) =>
       u.side === game.side &&
       `${t(u.name)} ${u.name}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()),
@@ -51,7 +51,7 @@ export function ForcesSidebar({
         <div className="flex items-center justify-between">
           <h1 className="flex items-center gap-2 text-sm font-semibold">
             <ListTree className="size-4" />
-            {activeView === "forces" ? <>{t("Соединения")}<Badge variant="secondary">{game.units.length}</Badge></> : t("Сценарий")}
+            {activeView === "forces" ? <>{t("Соединения")}<Badge variant="secondary">{game.visibleUnits.length}</Badge></> : t("Сценарий")}
           </h1>
           <Button
             variant="ghost"
@@ -86,12 +86,12 @@ export function ForcesSidebar({
           <TabsList className="w-full">
             <TabsTrigger value="blue" className="flex-1">{t("Свои")}{" "}
               <span className="text-muted-foreground">
-                {game.units.filter((u) => u.side === "blue").length}
+                {game.visibleUnits.filter((u) => u.side === "blue").length}
               </span>
             </TabsTrigger>
             <TabsTrigger value="red" className="flex-1">{t("Противник")}{" "}
               <span className="text-muted-foreground">
-                {game.units.filter((u) => u.side === "red").length}
+                {game.visibleUnits.filter((u) => u.side === "red").length}
               </span>
             </TabsTrigger>
           </TabsList>
@@ -125,7 +125,7 @@ export function ForcesSidebar({
                     </span>
                   </span>
                   <span
-                    className={`size-1.5 shrink-0 rounded-full ${u.hp > 0 ? "bg-emerald-500" : "bg-neutral-400"}`}
+                    className={`size-1.5 shrink-0 rounded-full ${u.hp > 0 && !u.contactLost ? "bg-emerald-500" : "bg-neutral-400"}`}
                   />
                 </SidebarMenuButton>
               </SidebarMenuItem>

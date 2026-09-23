@@ -80,7 +80,7 @@ function Workspace() {
         scenario={game.scenario}
         points={game.battle.points}
         releasedReserves={game.battle.releasedReserves}
-        units={game.units}
+        units={game.visibleUnits}
         selected={game.selected}
         onSelect={selectUnit}
         onMapClick={game.onMapClick}
@@ -159,7 +159,7 @@ function Workspace() {
         onJournal={() => setPanel("journal")}
         onSelect={(id) => {
           selectUnit(id);
-          const u = game.units.find((v) => v.id === id);
+          const u = game.visibleUnits.find((v) => v.id === id);
           if (u) setFocus([u.lat, u.lng]);
         }}
       />
