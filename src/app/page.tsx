@@ -84,6 +84,7 @@ function Workspace() {
         selected={game.selected}
         onSelect={selectUnit}
         onMapClick={game.onMapClick}
+        placing={game.placing}
         grid={game.grid}
         routes={game.routes}
         focus={focus}
@@ -175,7 +176,7 @@ function Workspace() {
           <Crosshair className="size-4 shrink-0" />
           <span>
             {t(game.placing
-              ? "Выберите точку размещения"
+              ? "Выберите точку размещения. Удерживайте Shift, чтобы добавить несколько соединений."
               : "Укажите точку назначения")}
           </span>
           <Button

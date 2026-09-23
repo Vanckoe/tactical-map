@@ -83,7 +83,7 @@ export function useSandbox() {
   function log(message: string) {
     setLogs((l) => [message, ...l].slice(0, 30));
   }
-  function onMapClick(lat: number, lng: number) {
+  function onMapClick(lat: number, lng: number, shiftKey = false) {
     if (placing && scenario) { setToast("Состав сил задан сценарием. Для размещения выберите свободную песочницу."); return; }
     if (battle.winner) { setToast("Сценарий завершён. Начните заново через меню сценария."); return; }
     if (botEnabled && ((placing && side === "red") || (command && unit?.side === "red"))) { setToast("Противником управляет бот. Отключите бота для ручного управления."); return; }
@@ -107,7 +107,7 @@ export function useSandbox() {
         },
       ]);
       setSelected(id);
-      setPlacing(false);
+      setPlacing(shiftKey);
       log(`Размещено соединение: ${name}`);
       setToast("Соединение размещено");
     } else if (command && unit && unit.hp > 0) {

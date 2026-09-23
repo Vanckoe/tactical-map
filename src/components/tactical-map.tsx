@@ -17,7 +17,8 @@ type Props = {
   units: Unit[];
   selected: string;
   onSelect: (id: string) => void;
-  onMapClick: (lat: number, lng: number) => void;
+  onMapClick: (lat: number, lng: number, shiftKey: boolean) => void;
+  placing: boolean;
   grid: boolean;
   routes: boolean;
   focus: [number, number];
@@ -30,6 +31,7 @@ export default function TacticalMap({
   selected,
   onSelect,
   onMapClick,
+  placing,
   grid,
   routes,
   focus,
@@ -60,7 +62,7 @@ export default function TacticalMap({
     L.control.scale({ position: "bottomleft", imperial: false }).addTo(m);
     group.current = L.layerGroup().addTo(m);
     m.on("click", (e: L.LeafletMouseEvent) =>
-      handlers.current.onMapClick(e.latlng.lat, e.latlng.lng),
+      handlers.current.onMapClick(e.latlng.lat, e.latlng.lng, e.originalEvent.shiftKey),
     );
     const observer = new ResizeObserver(() => m.invalidateSize());
     observer.observe(el.current);
@@ -70,6 +72,10 @@ export default function TacticalMap({
       map.current = null;
     };
   }, []);
+  useEffect(() => {
+    if (placing) map.current?.boxZoom.disable();
+    else map.current?.boxZoom.enable();
+  }, [placing]);
   useEffect(() => {
     const g = group.current;
     if (!g) return;
@@ -142,7 +148,7 @@ export default function TacticalMap({
       onKeyDown={(e) => {
         if (e.key === "Enter" && map.current) {
           const p = map.current.getCenter();
-          onMapClick(p.lat, p.lng);
+          onMapClick(p.lat, p.lng, e.shiftKey);
         }
       }}
       aria-label={t("Интерактивная карта Казахстана")}
