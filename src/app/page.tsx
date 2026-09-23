@@ -256,7 +256,7 @@ function Workspace() {
               value={String(game.speed)}
               onValueChange={(v) => game.setSpeed(Number(v))}
             >
-              {[1, 2, 5, 10, 20, 25, 50].map((s) => (
+              {[1, 2, 5, 10, 20, 25, 50, 75, 100].map((s) => (
                 <DropdownMenuRadioItem key={s} value={String(s)}>
                   {s}×{" "}
                   {t(s === 1 ? "" : s === 2 ? "" : "")}

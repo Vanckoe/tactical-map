@@ -72,7 +72,7 @@ function createBorderPatrol(): Scenario {
     timeLimitSeconds: 3 * 60 * 60, holdSeconds: 0, supplyDisabled: true,
     description: "От пограничников РФ поступило сообщение: человек незаконно пересёк границу на линии железной дороги. В игре нарушитель представлен одним отделением мотопехоты. На заставах Афонькино, Белое и Мамлют — по три взвода мотопехоты. Задержите нарушителя до его прибытия в Петропавл. Снабжение и огонь отключены. Граница и место входа условные, для игровой механики.",
     borderPatrol: {
-      intruderId: "10", entry: { lat: 55.005, lng: 68.23 }, captureRadiusKm: 0.6, detectionRadiusKm: 5,
+      intruderId: "10", entry: { lat: 55.005, lng: 68.23 }, captureRadiusKm: 0.6, detectionRadiusKm: 1.5,
       territory: { south: 54.7, north: 55.15, west: 68.21, east: 69.4 }, outposts,
     },
     units: [
