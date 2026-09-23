@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { isWorkspaceShortcut } from "@/lib/keyboard";
 import { initialUnits, kinds, Kind, Unit } from "@/lib/simulation";
 import { newBattle, tickBattle } from "@/lib/battle";
 import { getScenario } from "@/lib/scenarios";
@@ -47,6 +48,24 @@ export function useSandbox() {
   ]);
   const [mode, setMode] = useState("sandbox");
   const unit = units.find((u) => u.id === selected);
+  const removeSelectedUnit = useCallback(() => {
+    if (!unit || battle.winner || (botEnabled && unit.side === "red")) return;
+    setBattle((old) => ({ ...old, units: old.units.filter((u) => u.id !== unit.id) }));
+    setSelected("");
+    setCommand(false);
+    setLogs((logs) => [`Удалено: ${unit.name}`, ...logs].slice(0, 30));
+  }, [unit, battle.winner, botEnabled]);
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if (!isWorkspaceShortcut(event) || event.repeat) return;
+      if (event.key === "Delete" || event.key === "Backspace") {
+        event.preventDefault();
+        removeSelectedUnit();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [removeSelectedUnit]);
   useEffect(() => {
     if (!running) return;
     const timer = setInterval(() => {
@@ -257,6 +276,7 @@ export function useSandbox() {
     unit,
     log,
     onMapClick,
+    removeSelectedUnit,
     save,
     load,
     reset,

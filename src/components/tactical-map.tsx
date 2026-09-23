@@ -10,6 +10,7 @@ import { useSymbolStandard } from "@/components/symbology/symbol-provider";
 import { echelonLabel, getUnitStats } from "@/lib/unit-balance";
 import type { Scenario } from "@/lib/scenarios";
 import type { Battle } from "@/lib/battle";
+import { isWorkspaceShortcut } from "@/lib/keyboard";
 type Props = {
   scenario?: Scenario;
   points: Battle["points"];
@@ -61,12 +62,85 @@ export default function TacticalMap({
     }).addTo(m);
     L.control.scale({ position: "bottomleft", imperial: false }).addTo(m);
     group.current = L.layerGroup().addTo(m);
+    const panKeys: Record<string, [number, number]> = {
+      KeyW: [0, -1], ArrowUp: [0, -1],
+      KeyA: [-1, 0], ArrowLeft: [-1, 0],
+      KeyS: [0, 1], ArrowDown: [0, 1],
+      KeyD: [1, 0], ArrowRight: [1, 0],
+    };
+    const pressed = new Set<string>();
+    let frame = 0;
+    let lastTime = 0;
+    let velocityX = 0;
+    let velocityY = 0;
+    let remainderX = 0;
+    let remainderY = 0;
+    const stopPan = () => {
+      pressed.clear();
+      cancelAnimationFrame(frame);
+      frame = 0;
+      velocityX = velocityY = remainderX = remainderY = 0;
+    };
+    const animatePan = (time: number) => {
+      const dt = Math.min((time - lastTime) / 1000, 0.05);
+      lastTime = time;
+      let x = 0;
+      let y = 0;
+      for (const key of pressed) {
+        x += panKeys[key][0];
+        y += panKeys[key][1];
+      }
+      const length = Math.hypot(x, y) || 1;
+      const easing = 1 - Math.exp(-dt / 0.08);
+      velocityX += (x / length * 320 - velocityX) * easing;
+      velocityY += (y / length * 320 - velocityY) * easing;
+      remainderX += velocityX * dt;
+      remainderY += velocityY * dt;
+      const dx = Math.round(remainderX);
+      const dy = Math.round(remainderY);
+      remainderX -= dx;
+      remainderY -= dy;
+      if (dx || dy) m.panBy([dx, dy], { animate: false });
+      if (!pressed.size && Math.hypot(velocityX, velocityY) < 1) {
+        stopPan();
+        return;
+      }
+      frame = requestAnimationFrame(animatePan);
+    };
+    const handlePan = (event: KeyboardEvent) => {
+      if (!isWorkspaceShortcut(event)) {
+        stopPan();
+        return;
+      }
+      if (!panKeys[event.code]) return;
+      event.preventDefault();
+      // Handle arrows before Leaflet's keyboard listener to avoid panning twice.
+      event.stopPropagation();
+      pressed.add(event.code);
+      if (!frame) {
+        m.stop();
+        lastTime = performance.now();
+        frame = requestAnimationFrame(animatePan);
+      }
+    };
+    const releasePan = (event: KeyboardEvent) => pressed.delete(event.code);
+    window.addEventListener("keydown", handlePan, true);
+    window.addEventListener("keyup", releasePan, true);
+    window.addEventListener("blur", stopPan);
+    document.addEventListener("visibilitychange", stopPan);
+    document.addEventListener("focusin", stopPan);
     m.on("click", (e: L.LeafletMouseEvent) =>
       handlers.current.onMapClick(e.latlng.lat, e.latlng.lng, e.originalEvent.shiftKey),
     );
     const observer = new ResizeObserver(() => m.invalidateSize());
     observer.observe(el.current);
     return () => {
+      window.removeEventListener("keydown", handlePan, true);
+      window.removeEventListener("keyup", releasePan, true);
+      window.removeEventListener("blur", stopPan);
+      document.removeEventListener("visibilitychange", stopPan);
+      document.removeEventListener("focusin", stopPan);
+      stopPan();
       observer.disconnect();
       m.remove();
       map.current = null;

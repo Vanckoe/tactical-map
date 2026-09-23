@@ -94,12 +94,7 @@ export function UnitInspector({
             <DropdownMenuItem
               variant="destructive"
               disabled={(game.botEnabled && u.side === "red") || !!game.battle.winner}
-              onSelect={() => {
-                game.setUnits((us) => us.filter((v) => v.id !== u.id));
-                game.setSelected("");
-                game.setCommand(false);
-                game.log(`Удалено: ${u.name}`);
-              }}
+              onSelect={game.removeSelectedUnit}
             >
               <Trash2 />{t("Удалить соединение")}</DropdownMenuItem>
           </DropdownMenuContent>
