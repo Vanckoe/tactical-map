@@ -69,17 +69,18 @@ export default function TacticalMap({
       KeyD: [1, 0], ArrowRight: [1, 0],
     };
     const pressed = new Set<string>();
+    const mapPane = m.getPane("mapPane")!;
     let frame = 0;
     let lastTime = 0;
     let velocityX = 0;
     let velocityY = 0;
-    let remainderX = 0;
-    let remainderY = 0;
     const stopPan = () => {
       pressed.clear();
+      const wasMoving = frame !== 0;
       cancelAnimationFrame(frame);
       frame = 0;
-      velocityX = velocityY = remainderX = remainderY = 0;
+      velocityX = velocityY = 0;
+      if (wasMoving) m.fire("moveend");
     };
     const animatePan = (time: number) => {
       const dt = Math.min((time - lastTime) / 1000, 0.05);
@@ -91,16 +92,14 @@ export default function TacticalMap({
         y += panKeys[key][1];
       }
       const length = Math.hypot(x, y) || 1;
-      const easing = 1 - Math.exp(-dt / 0.08);
-      velocityX += (x / length * 320 - velocityX) * easing;
-      velocityY += (y / length * 320 - velocityY) * easing;
-      remainderX += velocityX * dt;
-      remainderY += velocityY * dt;
-      const dx = Math.round(remainderX);
-      const dy = Math.round(remainderY);
-      remainderX -= dx;
-      remainderY -= dy;
-      if (dx || dy) m.panBy([dx, dy], { animate: false });
+      const easing = 1 - Math.exp(-dt / 0.16);
+      velocityX += (x / length * 280 - velocityX) * easing;
+      velocityY += (y / length * 280 - velocityY) * easing;
+      // Keep subpixel positions throughout one pan gesture. panBy rounds its
+      // offset and emits moveend on every call, causing visible frame steps.
+      const position = L.DomUtil.getPosition(mapPane);
+      L.DomUtil.setPosition(mapPane, position.subtract(L.point(velocityX * dt, velocityY * dt)));
+      m.fire("move");
       if (!pressed.size && Math.hypot(velocityX, velocityY) < 1) {
         stopPan();
         return;
@@ -119,6 +118,7 @@ export default function TacticalMap({
       pressed.add(event.code);
       if (!frame) {
         m.stop();
+        m.fire("movestart");
         lastTime = performance.now();
         frame = requestAnimationFrame(animatePan);
       }
@@ -129,6 +129,7 @@ export default function TacticalMap({
     window.addEventListener("blur", stopPan);
     document.addEventListener("visibilitychange", stopPan);
     document.addEventListener("focusin", stopPan);
+    m.on("dragstart zoomstart", stopPan);
     m.on("click", (e: L.LeafletMouseEvent) =>
       handlers.current.onMapClick(e.latlng.lat, e.latlng.lng, e.originalEvent.shiftKey),
     );
@@ -140,6 +141,7 @@ export default function TacticalMap({
       window.removeEventListener("blur", stopPan);
       document.removeEventListener("visibilitychange", stopPan);
       document.removeEventListener("focusin", stopPan);
+      m.off("dragstart zoomstart", stopPan);
       stopPan();
       observer.disconnect();
       m.remove();
