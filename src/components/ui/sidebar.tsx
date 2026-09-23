@@ -1,4 +1,6 @@
 "use client";
+import { useI18n } from "@/components/i18n/language-provider";
+
 
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
@@ -161,6 +163,7 @@ function Sidebar({
   variant?: "sidebar" | "floating" | "inset";
   collapsible?: "offcanvas" | "icon" | "none";
 }) {
+  const { t } = useI18n();
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 
   if (collapsible === "none") {
@@ -195,10 +198,8 @@ function Sidebar({
           side={side}
         >
           <SheetHeader className="sr-only">
-            <SheetTitle>Соединения</SheetTitle>
-            <SheetDescription>
-              Список сил и управление сценарием.
-            </SheetDescription>
+            <SheetTitle>{t("Соединения")}</SheetTitle>
+            <SheetDescription>{t("Список сил и управление сценарием.")}</SheetDescription>
           </SheetHeader>
           <div className="flex h-full w-full flex-col">{children}</div>
         </SheetContent>

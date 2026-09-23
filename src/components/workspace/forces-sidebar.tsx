@@ -1,4 +1,6 @@
 "use client";
+import { useI18n } from "@/components/i18n/language-provider";
+
 import { useState } from "react";
 import Link from "next/link";
 import { Plus, Search, PanelLeftClose, ListTree, Radio, BookOpen } from "lucide-react";
@@ -32,6 +34,7 @@ export function ForcesSidebar({
   onJournal: () => void;
   onSelect: (id: string) => void;
 }) {
+  const { t } = useI18n();
   const [view, setView] = useState("forces");
   const activeView = game.scenario ? view : "forces";
   const [query, setQuery] = useState("");
@@ -39,7 +42,7 @@ export function ForcesSidebar({
   const units = game.units.filter(
     (u) =>
       u.side === game.side &&
-      u.name.toLowerCase().includes(query.toLowerCase()),
+      `${t(u.name)} ${u.name}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()),
   );
   return (
     <Sidebar variant="floating" className="forces-sidebar">
@@ -48,20 +51,20 @@ export function ForcesSidebar({
         <div className="flex items-center justify-between">
           <h1 className="flex items-center gap-2 text-sm font-semibold">
             <ListTree className="size-4" />
-            {activeView === "forces" ? <>Соединения<Badge variant="secondary">{game.units.length}</Badge></> : "Сценарий"}
+            {activeView === "forces" ? <>{t("Соединения")}<Badge variant="secondary">{game.units.length}</Badge></> : t("Сценарий")}
           </h1>
           <Button
             variant="ghost"
             size="icon-sm"
             onClick={toggleSidebar}
-            aria-label="Скрыть боковую панель"
+            aria-label={t("Скрыть боковую панель")}
           >
             <PanelLeftClose />
           </Button>
         </div>
-        {game.scenario && <TabsList className="w-full" aria-label="Раздел боковой панели">
-          <TabsTrigger value="forces" className="flex-1">Соединения</TabsTrigger>
-          <TabsTrigger value="scenario" className="flex-1">Сценарий{game.battle.winner && <span className="text-[10px]"> · Итог</span>}</TabsTrigger>
+        {game.scenario && <TabsList className="w-full" aria-label={t("Раздел боковой панели")}>
+          <TabsTrigger value="forces" className="flex-1">{t("Соединения")}</TabsTrigger>
+          <TabsTrigger value="scenario" className="flex-1">{t("Сценарий")}{game.battle.winner && <span className="text-[10px]">{t(" · Итог")}</span>}</TabsTrigger>
         </TabsList>}
       </SidebarHeader>
       <TabsContent value="forces" className="mt-0 flex min-h-0 flex-1 flex-col">
@@ -69,8 +72,8 @@ export function ForcesSidebar({
         <div className="relative">
           <Search className="absolute left-2.5 top-2.5 size-3.5 text-muted-foreground" />
           <Input
-            aria-label="Поиск соединений"
-            placeholder="Найти соединение…"
+            aria-label={t("Поиск соединений")}
+            placeholder={t("Найти соединение…")}
             className="pl-8"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -81,14 +84,12 @@ export function ForcesSidebar({
           onValueChange={(s) => game.setSide(s as "blue" | "red")}
         >
           <TabsList className="w-full">
-            <TabsTrigger value="blue" className="flex-1">
-              Свои{" "}
+            <TabsTrigger value="blue" className="flex-1">{t("Свои")}{" "}
               <span className="text-muted-foreground">
                 {game.units.filter((u) => u.side === "blue").length}
               </span>
             </TabsTrigger>
-            <TabsTrigger value="red" className="flex-1">
-              Противник{" "}
+            <TabsTrigger value="red" className="flex-1">{t("Противник")}{" "}
               <span className="text-muted-foreground">
                 {game.units.filter((u) => u.side === "red").length}
               </span>
@@ -99,9 +100,9 @@ export function ForcesSidebar({
       <SidebarContent>
         <SidebarGroup className="px-2 pt-0">
           <p className="px-2 pb-3 text-xs text-muted-foreground">
-            {game.side === "blue"
+            {t(game.side === "blue"
               ? game.scenario?.name ?? "Группировка «Жетысу»"
-              : "Условный противник"}
+              : "Условный противник")}
           </p>
           <SidebarMenu>
             {units.map((u) => (
@@ -117,10 +118,10 @@ export function ForcesSidebar({
                   <UnitSymbol kind={u.kind} side={u.side} echelon={u.echelon} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-xs font-medium">
-                      {u.name}
+                      {t(u.name)}
                     </span>
                     <span className="mt-1 block text-[11px] text-muted-foreground">
-                      {echelonLabel(u.kind, u.echelon)} · {u.order}
+                      {t(echelonLabel(u.kind, u.echelon))} · {t(u.order)}
                     </span>
                   </span>
                   <span
@@ -131,29 +132,25 @@ export function ForcesSidebar({
             ))}
           </SidebarMenu>
           {units.length === 0 && (
-            <p className="px-2 py-8 text-center text-xs text-muted-foreground">
-              Соединений не найдено
-            </p>
+            <p className="px-2 py-8 text-center text-xs text-muted-foreground">{t("Соединений не найдено")}</p>
           )}
         </SidebarGroup>
       </SidebarContent>
       </TabsContent>
       <TabsContent value="scenario" className="mt-0 min-h-0 flex-1 overflow-y-auto px-4 pb-4">
-        <p className="mb-4 text-xs text-muted-foreground">{game.scenario?.name}</p>
+        <p className="mb-4 text-xs text-muted-foreground">{t(game.scenario?.name)}</p>
         <BattleStatus game={game} />
       </TabsContent>
       <SidebarFooter className="gap-2 border-t p-3">
         {activeView === "forces" && <Button
           disabled={!!game.scenario}
-          title={game.scenario ? "Состав сил задан сценарием. Создавайте части в свободной песочнице." : undefined}
+          title={t(game.scenario ? "Состав сил задан сценарием. Создавайте части в свободной песочнице." : undefined)}
           onClick={() => {
             setOpenMobile(false);
             onCreate();
           }}
         >
-          <Plus />
-          Добавить соединение
-        </Button>}
+          <Plus />{t("Добавить соединение")}</Button>}
         <Button
           variant="ghost"
           className="justify-start text-muted-foreground"
@@ -162,14 +159,12 @@ export function ForcesSidebar({
             onJournal();
           }}
         >
-          <Radio />
-          Журнал событий
-          <Badge variant="secondary" className="ml-auto">
+          <Radio />{t("Журнал событий")}<Badge variant="secondary" className="ml-auto">
             {game.logs.length}
           </Badge>
         </Button>
         <Button asChild variant="ghost" className="justify-start text-muted-foreground">
-          <Link href="/symbols" target="_blank" rel="noopener noreferrer"><BookOpen />Справочник обозначений ↗</Link>
+          <Link href="/symbols" target="_blank" rel="noopener noreferrer"><BookOpen />{t("Справочник обозначений ↗")}</Link>
         </Button>
       </SidebarFooter>
       </Tabs>

@@ -1,4 +1,6 @@
 "use client";
+import { useI18n } from "@/components/i18n/language-provider";
+
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -34,6 +36,7 @@ export default function TacticalMap({
   zoomAction,
   enemies,
 }: Props) {
+  const { t } = useI18n();
   const { standard } = useSymbolStandard();
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
@@ -72,29 +75,29 @@ export default function TacticalMap({
     if (!g) return;
     g.clearLayers();
     scenario?.terrain.forEach((zone) => {
-      L.circle([zone.lat, zone.lng], { radius: zone.radiusKm * 1000, color: zone.type === "water" ? "#377ea5" : zone.type === "urban" ? "#9b7185" : "#987838", weight: 1, fillOpacity: 0.2, dashArray: zone.type === "water" ? undefined : "4 4" }).addTo(g).bindTooltip(zone.label);
+      L.circle([zone.lat, zone.lng], { radius: zone.radiusKm * 1000, color: zone.type === "water" ? "#377ea5" : zone.type === "urban" ? "#9b7185" : "#987838", weight: 1, fillOpacity: 0.2, dashArray: zone.type === "water" ? undefined : "4 4" }).addTo(g).bindTooltip(t(zone.label));
     });
     scenario?.objectives.forEach((objective) => {
       const state = points[objective.id];
       const label = `${objective.name} · ${state?.contested ? "Оспаривается" : state?.owner === "blue" ? "Свои" : state?.owner === "red" ? "Противник" : "Нейтральная"}`;
-      L.circle([objective.lat, objective.lng], { radius: objective.radiusKm * 1000, color: state?.owner ? affiliationColor(standard, state.owner) : "#565656", weight: 2, fillOpacity: 0.08 }).addTo(g).bindTooltip(label, { permanent: true, direction: "center" });
+      L.circle([objective.lat, objective.lng], { radius: objective.radiusKm * 1000, color: state?.owner ? affiliationColor(standard, state.owner) : "#565656", weight: 2, fillOpacity: 0.08 }).addTo(g).bindTooltip(t(label), { permanent: true, direction: "center" });
     });
     scenario?.reserves.filter((wave) => !releasedReserves.includes(wave.id)).forEach((wave, index) => {
       const position = wave.units[0];
       if (!enemies && position.side === "red") return;
       L.circleMarker([position.lat, position.lng], { radius: 12, color: affiliationColor(standard, position.side), dashArray: "3 4", fillOpacity: 0.1 })
-        .addTo(g).bindTooltip(`${wave.name} · ${wave.releaseSeconds / 60} мин`, { permanent: true, direction: index % 2 ? "bottom" : "top" });
+        .addTo(g).bindTooltip(t(`${wave.name} · ${wave.releaseSeconds / 60} мин`), { permanent: true, direction: index % 2 ? "bottom" : "top" });
     });
     units
       .filter((u) => enemies || u.side === "blue")
       .forEach((u) => {
         const active = u.id === selected;
         L.marker([u.lat, u.lng], {
-          title: u.name,
-          alt: u.name,
+          title: t(u.name),
+          alt: t(u.name),
           icon: L.divIcon({
             className: `unit-marker ${active ? "selected" : ""} ${u.hp <= 0 ? "disabled" : ""}`,
-            html: `${symbolSvg(u.kind, u.side, standard, u.echelon)}<span>${u.id.padStart(2, "0")} / ${echelonLabel(u.kind, u.echelon)}</span>`,
+            html: `${symbolSvg(u.kind, u.side, standard, u.echelon)}<span>${u.id.padStart(2, "0")} / ${t(echelonLabel(u.kind, u.echelon))}</span>`,
             iconSize: [56, 59],
             iconAnchor: [28, 27],
           }),
@@ -118,7 +121,7 @@ export default function TacticalMap({
             interactive: false,
           }).addTo(g);
       });
-  }, [units, selected, routes, enemies, standard, scenario, points, releasedReserves]);
+  }, [units, selected, routes, enemies, standard, scenario, points, releasedReserves, t]);
   useEffect(() => {
     if (scenario && focus[0] === scenario.center[0] && focus[1] === scenario.center[1]) {
       const positions = [...scenario.units, ...scenario.reserves.flatMap((wave) => wave.units)];
@@ -142,7 +145,7 @@ export default function TacticalMap({
           onMapClick(p.lat, p.lng);
         }
       }}
-      aria-label="Интерактивная карта Казахстана"
+      aria-label={t("Интерактивная карта Казахстана")}
     />
   );
 }

@@ -1,4 +1,6 @@
 "use client";
+import { useI18n } from "@/components/i18n/language-provider";
+
 
 import * as React from "react";
 import { cn } from "cn";
@@ -55,6 +57,7 @@ function DialogContent({
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
 }) {
+  const { t } = useI18n();
   return (
     <DialogPortal>
       <DialogOverlay />
@@ -75,7 +78,7 @@ function DialogContent({
               size="icon-sm"
             >
               <XIcon />
-              <span className="sr-only">Закрыть</span>
+              <span className="sr-only">{t("Закрыть")}</span>
             </Button>
           </DialogPrimitive.Close>
         )}
@@ -102,6 +105,7 @@ function DialogFooter({
 }: React.ComponentProps<"div"> & {
   showCloseButton?: boolean;
 }) {
+  const { t } = useI18n();
   return (
     <div
       data-slot="dialog-footer"
@@ -114,7 +118,7 @@ function DialogFooter({
       {children}
       {showCloseButton && (
         <DialogPrimitive.Close asChild>
-          <Button variant="outline">Закрыть</Button>
+          <Button variant="outline">{t("Закрыть")}</Button>
         </DialogPrimitive.Close>
       )}
     </div>

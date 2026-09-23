@@ -1,4 +1,6 @@
 "use client";
+import { useI18n } from "@/components/i18n/language-provider";
+
 
 import * as React from "react";
 import { cn } from "cn";
@@ -55,6 +57,7 @@ function SheetContent({
   side?: "top" | "right" | "bottom" | "left";
   showCloseButton?: boolean;
 }) {
+  const { t } = useI18n();
   return (
     <SheetPortal>
       <SheetOverlay />
@@ -76,7 +79,7 @@ function SheetContent({
               size="icon-sm"
             >
               <XIcon />
-              <span className="sr-only">Закрыть</span>
+              <span className="sr-only">{t("Закрыть")}</span>
             </Button>
           </SheetPrimitive.Close>
         )}

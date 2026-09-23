@@ -1,7 +1,11 @@
 "use client";
+import { useI18n } from "@/components/i18n/language-provider";
+
 import dynamic from "next/dynamic";
+import { LanguageSwitch } from "@/components/i18n/language-switch";
+import { ScenarioPicker } from "@/components/workspace/scenario-picker";
 import { StandardSwitch } from "@/components/symbology/standard-switch";
-import { useState, type CSSProperties } from "react";
+import { useRef, useState, type CSSProperties } from "react";
 import {
   PanelLeft,
   Plus,
@@ -39,7 +43,7 @@ import { UnitInspector } from "@/components/workspace/unit-inspector";
 import { WorkspacePanels } from "@/components/workspace/workspace-panels";
 const TacticalMap = dynamic(() => import("@/components/tactical-map"), {
   ssr: false,
-  loading: () => <div className="map-loading">Загрузка карты…</div>,
+  loading: LoadingMap,
 });
 export default function Home() {
   return (
@@ -55,11 +59,15 @@ export default function Home() {
   );
 }
 function Workspace() {
+  const { t } = useI18n();
   const game = useSandbox();
   const [panel, setPanel] = useState("");
+  const [scenarioPickerOpen, setScenarioPickerOpen] = useState(false);
+  const scenarioTrigger = useRef<HTMLButtonElement>(null);
   const { focus, setFocus } = game;
   const { toggleSidebar, open, openMobile, isMobile } = useSidebar();
   function selectUnit(id: string) {
+    setScenarioPickerOpen(false);
     game.setSelected(id);
     game.setCommand(false);
     game.setPlacing(false);
@@ -89,36 +97,43 @@ function Workspace() {
               <Button
                 variant="ghost"
                 size="icon-lg"
-                aria-label="Открыть или скрыть соединения"
+                aria-label={t("Открыть или скрыть соединения")}
                 aria-expanded={isMobile ? openMobile : open}
                 onClick={toggleSidebar}
               >
                 <PanelLeft />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Соединения · Ctrl/⌘ B</TooltipContent>
+            <TooltipContent>{t("Соединения · Ctrl/⌘ B")}</TooltipContent>
           </Tooltip>
           <Separator orientation="vertical" className="h-5!" />
           <span className="dala-wordmark">DALA</span>
           <Separator orientation="vertical" className="brand-divider h-5!" />
-          <ScenarioMenu game={game} onJournal={() => setPanel("journal")} />
+          <ScenarioMenu game={game} triggerRef={scenarioTrigger} onJournal={() => setPanel("journal")} onChooseScenario={() => {
+            game.setSelected("");
+            game.setCommand(false);
+            game.setPlacing(false);
+            setPanel("");
+            setScenarioPickerOpen(true);
+          }} />
         </div>
         <div className="workspace-map-controls">
+          <LanguageSwitch />
           <StandardSwitch />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
                 className="region-control map-control h-10"
-                aria-label={`Район операции: ${game.region}`}
+                aria-label={t(`Район операции: ${game.region}`)}
               >
                 <MapPin />
-                <span>{game.region}</span>
+                <span>{t(game.region)}</span>
                 <ChevronDown className="size-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Перейти к району</DropdownMenuLabel>
+              <DropdownMenuLabel>{t("Перейти к району")}</DropdownMenuLabel>
               <DropdownMenuRadioGroup
                 value={game.region}
                 onValueChange={(r) => {
@@ -128,7 +143,7 @@ function Workspace() {
               >
                 {Object.keys(regions).map((r) => (
                   <DropdownMenuRadioItem key={r} value={r}>
-                    {r}
+                    {t(r)}
                   </DropdownMenuRadioItem>
                 ))}
               </DropdownMenuRadioGroup>
@@ -147,7 +162,7 @@ function Workspace() {
           if (u) setFocus([u.lat, u.lng]);
         }}
       />
-      {game.unit && !game.command && !game.placing && (
+      {scenarioPickerOpen ? <ScenarioPicker game={game} onClose={() => { setScenarioPickerOpen(false); scenarioTrigger.current?.focus(); }} /> : game.unit && !game.command && !game.placing && (
         <UnitInspector
           game={game}
           onFocus={() => {
@@ -159,14 +174,14 @@ function Workspace() {
         <div className="point-instruction floating-surface" role="status">
           <Crosshair className="size-4 shrink-0" />
           <span>
-            {game.placing
+            {t(game.placing
               ? "Выберите точку размещения"
-              : "Укажите точку назначения"}
+              : "Укажите точку назначения")}
           </span>
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label="Отменить выбор точки"
+            aria-label={t("Отменить выбор точки")}
             onClick={() => {
               game.setPlacing(false);
               game.setCommand(false);
@@ -182,19 +197,19 @@ function Workspace() {
             <Button
               size="icon-lg"
               variant="ghost"
-              aria-label="К району операции"
+              aria-label={t("К району операции")}
               onClick={() => setFocus(game.scenario?.center ?? [...regions[game.region]])}
             >
               <LocateFixed />
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="left">К району операции</TooltipContent>
+          <TooltipContent side="left">{t("К району операции")}</TooltipContent>
         </Tooltip>
         <Separator />
         <Button
           size="icon-lg"
           variant="ghost"
-          aria-label="Приблизить"
+          aria-label={t("Приблизить")}
           onClick={() => game.setZoom((z) => z + 1)}
         >
           <Plus />
@@ -202,7 +217,7 @@ function Workspace() {
         <Button
           size="icon-lg"
           variant="ghost"
-          aria-label="Отдалить"
+          aria-label={t("Отдалить")}
           onClick={() => game.setZoom((z) => z - 1)}
         >
           <Minus />
@@ -212,16 +227,16 @@ function Workspace() {
         <Button
           className="size-10 rounded-lg"
           size="icon-lg"
-          aria-label={game.running ? "Приостановить" : "Запустить"}
+          aria-label={t(game.running ? "Приостановить" : "Запустить")}
           onClick={() => game.setRunning(!game.running)}
         >
           {game.running ? <Pause /> : <Play fill="currentColor" />}
         </Button>
         <div className="playback-time">
           <span className="block text-[10px] text-muted-foreground">
-            {game.running ? "Симуляция идёт" : "На паузе"}
+            {t(game.running ? "Симуляция идёт" : "На паузе")}
           </span>
-          <span className="font-mono text-base tabular-nums">{game.time}</span>
+          <span className="font-mono text-base tabular-nums">{t(game.time)}</span>
         </div>
         <Separator orientation="vertical" className="h-7!" />
         <DropdownMenu>
@@ -229,13 +244,13 @@ function Workspace() {
             <Button
               variant="ghost"
               className="min-w-16 text-xs"
-              aria-label="Скорость симуляции"
+              aria-label={t("Скорость симуляции")}
             >
               {game.speed}×<ChevronDown className="size-3" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="end">
-            <DropdownMenuLabel>Скорость времени</DropdownMenuLabel>
+            <DropdownMenuLabel>{t("Скорость времени")}</DropdownMenuLabel>
             <DropdownMenuRadioGroup
               value={String(game.speed)}
               onValueChange={(v) => game.setSpeed(Number(v))}
@@ -243,7 +258,7 @@ function Workspace() {
               {[1, 2, 5, 10, 20, 25, 50].map((s) => (
                 <DropdownMenuRadioItem key={s} value={String(s)}>
                   {s}×{" "}
-                  {s === 1 ? "" : s === 2 ? "" : ""}
+                  {t(s === 1 ? "" : s === 2 ? "" : "")}
                 </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>
@@ -252,15 +267,17 @@ function Workspace() {
       </div>
       <div className="map-caption">
         <span className="size-1.5 rounded-full bg-emerald-600" />
-        {game.scenario ? "Учебная местность" : "Песочница"}<span className="text-neutral-400">/</span>Условная обстановка
-      </div>
+        {t(game.scenario ? "Учебная местность" : "Песочница")}<span className="text-neutral-400">/</span>{t("Условная обстановка")}</div>
       {game.toast && (
         <div className="workspace-toast floating-surface" role="status">
           <Check className="size-4 shrink-0" />
-          {game.toast}
+          {t(game.toast)}
         </div>
       )}
       <WorkspacePanels game={game} panel={panel} setPanel={setPanel} />
     </main>
   );
 }
+
+function LoadingMap() {
+  const { t } = useI18n(); return <div className="map-loading">{t("Загрузка карты…")}</div>; }

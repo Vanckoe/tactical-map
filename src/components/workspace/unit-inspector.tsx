@@ -1,4 +1,6 @@
 "use client";
+import { useI18n } from "@/components/i18n/language-provider";
+
 import {
   MoveUpRight,
   Shield,
@@ -34,6 +36,7 @@ export function UnitInspector({
   game: Sandbox;
   onFocus: () => void;
 }) {
+  const { t } = useI18n();
   const u = game.unit;
   if (!u) return null;
   function move(attack = false) {
@@ -46,20 +49,20 @@ export function UnitInspector({
   return (
     <section
       className="unit-inspector floating-surface"
-      aria-label="Выбранное соединение"
+      aria-label={t("Выбранное соединение")}
     >
       <div className="flex items-start gap-3 p-4">
         <UnitSymbol kind={u.kind} side={u.side} echelon={u.echelon} />
         <div className="min-w-0 flex-1">
           <p className="mb-1 text-[10px] text-muted-foreground">
-            {u.side === "blue" ? "Свои войска" : "Противник"} · {echelonLabel(u.kind, u.echelon)}
+            {t(u.side === "blue" ? "Свои войска" : "Противник")} · {t(echelonLabel(u.kind, u.echelon))}
           </p>
-          <h2 className="truncate text-sm font-semibold">{u.name}</h2>
+          <h2 className="truncate text-sm font-semibold">{t(u.name)}</h2>
         </div>
         <Button
           variant="ghost"
           size="icon-xs"
-          aria-label="Закрыть инспектор"
+          aria-label={t("Закрыть инспектор")}
           onClick={() => {
             game.setSelected("");
             game.setCommand(false);
@@ -73,23 +76,21 @@ export function UnitInspector({
           <span
             className={`mr-1 size-1.5 rounded-full ${u.hp > 0 ? "bg-emerald-500" : "bg-red-500"}`}
           />
-          {u.order}
+          {t(u.order)}
         </Badge>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
               size="icon-xs"
-              aria-label="Действия с соединением"
+              aria-label={t("Действия с соединением")}
             >
               <MoreHorizontal />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onSelect={onFocus}>
-              <LocateFixed />
-              Показать на карте
-            </DropdownMenuItem>
+              <LocateFixed />{t("Показать на карте")}</DropdownMenuItem>
             <DropdownMenuItem
               variant="destructive"
               disabled={(game.botEnabled && u.side === "red") || !!game.battle.winner}
@@ -100,9 +101,7 @@ export function UnitInspector({
                 game.log(`Удалено: ${u.name}`);
               }}
             >
-              <Trash2 />
-              Удалить соединение
-            </DropdownMenuItem>
+              <Trash2 />{t("Удалить соединение")}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -113,9 +112,7 @@ export function UnitInspector({
           className="h-14 flex-col gap-1 text-[11px]"
           onClick={() => move()}
         >
-          <MoveUpRight />
-          Движение
-        </Button>
+          <MoveUpRight />{t("Движение")}</Button>
         <Button
           disabled={u.hp <= 0 || (game.botEnabled && u.side === "red") || !!game.battle.winner}
           variant="outline"
@@ -132,18 +129,14 @@ export function UnitInspector({
             game.log(`${u.name}: удерживать позицию`);
           }}
         >
-          <Shield />
-          Удерживать
-        </Button>
+          <Shield />{t("Удерживать")}</Button>
         <Button
           disabled={u.hp <= 0 || UNIT_PROFILES[u.kind].damagePerSecond === 0 || (game.botEnabled && u.side === "red") || !!game.battle.winner}
           variant="outline"
           className="h-14 flex-col gap-1 text-[11px]"
           onClick={() => move(true)}
         >
-          <Target />
-          Атака
-        </Button>
+          <Target />{t("Атака")}</Button>
       </div>
       <div className="space-y-3 p-4">
         {[
@@ -152,7 +145,7 @@ export function UnitInspector({
         ].map((s) => (
           <div key={s.label}>
             <div className="mb-1.5 flex justify-between text-[11px]">
-              <span className="text-muted-foreground">{s.label}</span>
+              <span className="text-muted-foreground">{t(s.label)}</span>
               <span className="tabular-nums">{Math.round(s.value)}%</span>
             </div>
             <Progress value={s.value} className="h-1" />
@@ -161,34 +154,28 @@ export function UnitInspector({
       </div>
       <Accordion type="single" collapsible className="border-t px-4">
         <AccordionItem value="stats">
-          <AccordionTrigger className="py-3 text-xs font-normal">
-            Боевые характеристики
-          </AccordionTrigger>
+          <AccordionTrigger className="py-3 text-xs font-normal">{t("Боевые характеристики")}</AccordionTrigger>
           <AccordionContent>
             <UnitStats kind={u.kind} echelon={u.echelon} />
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="details" className="border-0">
-          <AccordionTrigger className="py-3 text-xs font-normal text-muted-foreground">
-            Подробнее о соединении
-          </AccordionTrigger>
+          <AccordionTrigger className="py-3 text-xs font-normal text-muted-foreground">{t("Подробнее о соединении")}</AccordionTrigger>
           <AccordionContent className="space-y-2 text-xs text-muted-foreground">
             <p>
-              {u.lat.toFixed(4)}° N · {u.lng.toFixed(4)}° E
+              {t(u.lat.toFixed(4))}° N · {t(u.lng.toFixed(4))}° E
             </p>
-            <p>Подавление: {Math.round(u.suppression ?? 0)}%</p>
-            <p>Укрепление позиции: {Math.round((u.entrenchment ?? 0) * 100)}%</p>
-            <p>Обратимые потери: {(u.recoverableHp ?? 0).toFixed(1)}%</p>
-            <p>На позиции: {Math.floor(u.stationarySeconds ?? 0)} с</p>
+            <p>{t("Подавление: ")}{Math.round(u.suppression ?? 0)}%</p>
+            <p>{t("Укрепление позиции: ")}{Math.round((u.entrenchment ?? 0) * 100)}%</p>
+            <p>{t("Обратимые потери: ")}{t((u.recoverableHp ?? 0).toFixed(1))}%</p>
+            <p>{t("На позиции: ")}{Math.floor(u.stationarySeconds ?? 0)}{t(" с")}</p>
             <p>
-              {u.target
+              {t(u.target
                 ? "Приказ принят. Маршрут отображён на карте."
-                : "Удерживает текущую позицию."}
+                : "Удерживает текущую позицию.")}
             </p>
             <Button size="sm" variant="outline" onClick={onFocus}>
-              <LocateFixed />
-              Показать на карте
-            </Button>
+              <LocateFixed />{t("Показать на карте")}</Button>
           </AccordionContent>
         </AccordionItem>
       </Accordion>

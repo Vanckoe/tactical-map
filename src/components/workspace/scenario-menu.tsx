@@ -1,7 +1,8 @@
 "use client";
+import { useI18n } from "@/components/i18n/language-provider";
+
 import Link from "next/link";
-import { useRef, useState } from "react";
-import { ScenarioPicker } from "./scenario-picker";
+import { useRef, type Ref } from "react";
 import {
   ChevronDown,
   Save,
@@ -26,14 +27,17 @@ import { Sandbox } from "@/hooks/use-sandbox";
 export function ScenarioMenu({
   game,
   onJournal,
+  onChooseScenario,
+  triggerRef,
 }: {
   game: Sandbox;
   onJournal: () => void;
+  onChooseScenario: () => void;
+  triggerRef: Ref<HTMLButtonElement>;
 }) {
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const { t } = useI18n();
+  const openingPicker = useRef(false);
   return (
-    <>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
@@ -43,37 +47,30 @@ export function ScenarioMenu({
         >
           <span className="text-left">
             <span className="block text-xs font-semibold">
-              {game.scenario?.name ?? "Песочница «Жетысу»"}
+              {t(game.scenario?.name ?? "Песочница «Жетысу»")}
             </span>
             <span className="block text-[10px] font-normal text-muted-foreground">
-              {game.mode === "sandbox" ? "Песочница" : "Учебный сценарий"} ·
-              {game.botEnabled ? "Противник: бот" : "Ручное управление"}
+              {t(game.mode === "sandbox" ? "Песочница" : "Учебный сценарий")} ·
+              {t(game.botEnabled ? "Противник: бот" : "Ручное управление")}
             </span>
           </span>
           <ChevronDown className="size-3.5 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-64">
-        <DropdownMenuLabel>Сценарий</DropdownMenuLabel>
+      <DropdownMenuContent align="start" className="w-64" onCloseAutoFocus={(event) => { if (openingPicker.current) { event.preventDefault(); openingPicker.current = false; } }}> 
+        <DropdownMenuLabel>{t("Сценарий")}</DropdownMenuLabel>
         <DropdownMenuItem onSelect={game.save}>
-          <Save />
-          Сохранить в браузере
-        </DropdownMenuItem>
+          <Save />{t("Сохранить в браузере")}</DropdownMenuItem>
         <DropdownMenuItem onSelect={game.load}>
-          <FolderOpen />
-          Загрузить сохранение
-        </DropdownMenuItem>
+          <FolderOpen />{t("Загрузить сохранение")}</DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={() => setPickerOpen(true)}>
-          <Flag />Выбрать сценарий
-        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => { openingPicker.current = true; onChooseScenario(); }}>
+          <Flag />{t("Выбрать сценарий")}</DropdownMenuItem>
         <DropdownMenuItem disabled={!game.scenario || !!game.battle.winner} onSelect={() => game.setBotEnabled(!game.botEnabled)}>
-          <Flag />{game.botEnabled ? "Отключить бота" : "Включить бота"}
+          <Flag />{t(game.botEnabled ? "Отключить бота" : "Включить бота")}
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={onJournal}>
-          <Radio />
-          Журнал событий
-        </DropdownMenuItem>
+          <Radio />{t("Журнал событий")}</DropdownMenuItem>
         <DropdownMenuItem
           onSelect={() => {
             if (document.fullscreenElement) document.exitFullscreen();
@@ -83,31 +80,24 @@ export function ScenarioMenu({
                 .catch(() => game.setToast("Полноэкранный режим недоступен"));
           }}
         >
-          <Maximize />
-          Полноэкранный режим
-        </DropdownMenuItem>
+          <Maximize />{t("Полноэкранный режим")}</DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/symbols" target="_blank" rel="noopener noreferrer"><BookOpen />Тактические обозначения ↗</Link>
+          <Link href="/symbols" target="_blank" rel="noopener noreferrer"><BookOpen />{t("Тактические обозначения ↗")}</Link>
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => game.setModal("help")}>
-          <BookOpen />
-          Как играть
-        </DropdownMenuItem>
+          <BookOpen />{t("Как играть")}</DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           variant="destructive"
           onSelect={() => game.setModal("reset")}
         >
-          <RotateCcw />
-          Сбросить сценарий
-        </DropdownMenuItem>
+          <RotateCcw />{t("Сбросить сценарий")}</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-    <ScenarioPicker game={game} open={pickerOpen} onOpenChange={setPickerOpen} onCloseFocus={() => triggerRef.current?.focus()} />
-    </>
   );
 }
 export function LayerMenu({ game }: { game: Sandbox }) {
+  const { t } = useI18n();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -115,13 +105,13 @@ export function LayerMenu({ game }: { game: Sandbox }) {
           variant="outline"
           size="icon-lg"
           className="map-control"
-          aria-label="Слои карты"
+          aria-label={t("Слои карты")}
         >
           <Layers />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60">
-        <DropdownMenuLabel>Отображение карты</DropdownMenuLabel>
+        <DropdownMenuLabel>{t("Отображение карты")}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <LayerOptions game={game} />
       </DropdownMenuContent>
@@ -130,6 +120,7 @@ export function LayerMenu({ game }: { game: Sandbox }) {
 }
 import { DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
 function LayerOptions({ game }: { game: Sandbox }) {
+  const { t } = useI18n();
   return (
     <>
       {[
@@ -147,7 +138,7 @@ function LayerOptions({ game }: { game: Sandbox }) {
           onCheckedChange={item.set}
           onSelect={(e) => e.preventDefault()}
         >
-          {item.label}
+          {t(item.label)}
         </DropdownMenuCheckboxItem>
       ))}
     </>

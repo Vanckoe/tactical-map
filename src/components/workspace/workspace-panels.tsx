@@ -1,4 +1,6 @@
 "use client";
+import { useI18n } from "@/components/i18n/language-provider";
+
 import { useState } from "react";
 import { Plus, Radio } from "lucide-react";
 import {
@@ -41,6 +43,7 @@ export function WorkspacePanels({
   panel: string;
   setPanel: (v: string) => void;
 }) {
+  const { t } = useI18n();
   const [role, setRole] = useState("all");
   return (
     <>
@@ -53,43 +56,37 @@ export function WorkspacePanels({
         <SheetContent className="overflow-y-auto">
           <SheetHeader>
             <SheetTitle>
-              {panel === "create" ? "Добавить соединение" : "Журнал событий"}
+              {t(panel === "create" ? "Добавить соединение" : "Журнал событий")}
             </SheetTitle>
             <SheetDescription>
-              {panel === "create"
+              {t(panel === "create"
                 ? "Настройте соединение, затем выберите точку на карте."
-                : "Приказы и изменения текущего сценария."}
+                : "Приказы и изменения текущего сценария.")}
             </SheetDescription>
           </SheetHeader>
           {panel === "create" ? (
             <>
               <div className="space-y-6 px-4 py-4">
                 <div className="space-y-2">
-                  <p className="text-sm font-medium">Сторона</p>
+                  <p className="text-sm font-medium">{t("Сторона")}</p>
                   <Tabs
                     value={game.side}
                     onValueChange={(v) => game.setSide(v as "blue" | "red")}
                   >
                     <TabsList className="w-full">
-                      <TabsTrigger value="blue" className="flex-1">
-                        Свои войска
-                      </TabsTrigger>
-                      <TabsTrigger disabled={game.botEnabled} value="red" className="flex-1">
-                        Противник
-                      </TabsTrigger>
+                      <TabsTrigger value="blue" className="flex-1">{t("Свои войска")}</TabsTrigger>
+                      <TabsTrigger disabled={game.botEnabled} value="red" className="flex-1">{t("Противник")}</TabsTrigger>
                     </TabsList>
                   </Tabs>
                 </div>
                 <fieldset>
-                  <legend className="mb-3 text-sm font-medium">
-                    Род войск
-                  </legend>
+                  <legend className="mb-3 text-sm font-medium">{t("Род войск")}</legend>
                   <Tabs value={role} onValueChange={setRole} className="mb-3">
                     <TabsList className="w-full">
-                      <TabsTrigger value="all" className="flex-1 text-xs">Все</TabsTrigger>
-                      <TabsTrigger value="combat" className="flex-1 text-xs">Боевые</TabsTrigger>
-                      <TabsTrigger value="recon" className="flex-1 text-xs">Разведка</TabsTrigger>
-                      <TabsTrigger value="support" className="flex-1 text-xs">Поддержка</TabsTrigger>
+                      <TabsTrigger value="all" className="flex-1 text-xs">{t("Все")}</TabsTrigger>
+                      <TabsTrigger value="combat" className="flex-1 text-xs">{t("Боевые")}</TabsTrigger>
+                      <TabsTrigger value="recon" className="flex-1 text-xs">{t("Разведка")}</TabsTrigger>
+                      <TabsTrigger value="support" className="flex-1 text-xs">{t("Поддержка")}</TabsTrigger>
                     </TabsList>
                   </Tabs>
                   <div className="grid grid-cols-2 gap-2">
@@ -105,16 +102,14 @@ export function WorkspacePanels({
                         }}
                       >
                         <UnitSymbol kind={k.id} side={game.side} />
-                        {k.label}
+                        {t(k.label)}
                       </Button>
                     ))}
                   </div>
                 </fieldset>
-                <p className="rounded-lg bg-muted p-3 text-xs leading-relaxed" role="status">{UNIT_PROFILES[game.kind].label}: {UNIT_PROFILES[game.kind].description}</p>
+                <p className="rounded-lg bg-muted p-3 text-xs leading-relaxed" role="status">{t(UNIT_PROFILES[game.kind].label)}: {t(UNIT_PROFILES[game.kind].description)}</p>
                 <div className="space-y-2">
-                  <label htmlFor="echelon" className="text-sm font-medium">
-                    Масштаб соединения
-                  </label>
+                  <label htmlFor="echelon" className="text-sm font-medium">{t("Масштаб соединения")}</label>
                   <Select
                     value={game.echelon}
                     onValueChange={(value) => {
@@ -127,7 +122,7 @@ export function WorkspacePanels({
                     <SelectContent>
                       {UNIT_PROFILES[game.kind].echelons.map((e) => (
                         <SelectItem key={e} value={e}>
-                          {echelonLabel(game.kind, e)}
+                          {t(echelonLabel(game.kind, e))}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -146,12 +141,8 @@ export function WorkspacePanels({
                     game.setCommand(false);
                   }}
                 >
-                  <Plus />
-                  Выбрать точку на карте
-                </Button>
-                <p className="text-center text-xs text-muted-foreground">
-                  Esc — отменить размещение
-                </p>
+                  <Plus />{t("Выбрать точку на карте")}</Button>
+                <p className="text-center text-xs text-muted-foreground">{t("Esc — отменить размещение")}</p>
               </SheetFooter>
             </>
           ) : (
@@ -159,7 +150,7 @@ export function WorkspacePanels({
               {game.logs.map((log, i) => (
                 <div key={`${i}-${log}`} className="flex gap-3 text-sm">
                   <Radio className="mt-1 size-3.5 shrink-0 text-muted-foreground" />
-                  <p>{log}</p>
+                  <p>{t(log)}</p>
                 </div>
               ))}
             </div>
@@ -175,65 +166,41 @@ export function WorkspacePanels({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {game.modal === "reset"
+              {t(game.modal === "reset"
                 ? "Сбросить сценарий?"
                 : game.modal === "game"
                   ? "Учебный сценарий"
-                  : "Как играть"}
+                  : "Как играть")}
             </DialogTitle>
             <DialogDescription>
-              {game.modal === "reset"
+              {t(game.modal === "reset"
                 ? "Размещение и приказы вернутся к исходным. Сохранение в браузере останется доступным."
                 : game.modal === "game"
                   ? "Свободное столкновение двух вымышленных сторон."
-                  : "Создавайте обстановку, отдавайте приказы и управляйте временем."}
+                  : "Создавайте обстановку, отдавайте приказы и управляйте временем.")}
             </DialogDescription>
           </DialogHeader>
           {game.modal === "reset" ? (
             <DialogFooter>
-              <Button variant="outline" onClick={() => game.setModal("")}>
-                Отмена
-              </Button>
-              <Button variant="destructive" onClick={game.reset}>
-                Сбросить
-              </Button>
+              <Button variant="outline" onClick={() => game.setModal("")}>{t("Отмена")}</Button>
+              <Button variant="destructive" onClick={game.reset}>{t("Сбросить")}</Button>
             </DialogFooter>
           ) : game.modal === "game" ? (
             <div className="space-y-4 text-sm text-muted-foreground">
-              <p>
-                Разместите силы обеих сторон и задайте маршруты. При сближении
-                бой начнётся после обнаружения допустимой цели и развёртывания.
-              </p>
-              <p>
-                Противник управляется ботом. Наступающие начинают примерно в 30 км от города и должны удержать его 15 минут. Оборона удерживает город до конца времени и получает резервы из тыла по расписанию. Зоны местности учебные, а не точная модель города.
-              </p>
-              {SCENARIOS.map((scenario) => <Button key={scenario.id} variant="outline" onClick={() => game.selectScenario(scenario.id)}>{scenario.name}</Button>)}
+              <p>{t("Разместите силы обеих сторон и задайте маршруты. При сближении бой начнётся после обнаружения допустимой цели и развёртывания.")}</p>
+              <p>{t("Противник управляется ботом. Наступающие начинают примерно в 30 км от города и должны удержать его 15 минут. Оборона удерживает город до конца времени и получает резервы из тыла по расписанию. Зоны местности учебные, а не точная модель города.")}</p>
+              {SCENARIOS.map((scenario) => <Button key={scenario.id} variant="outline" onClick={() => game.selectScenario(scenario.id)}>{t(scenario.name)}</Button>)}
             </div>
           ) : (
             <div className="space-y-4 text-sm leading-relaxed text-muted-foreground">
               <p>
-                <strong className="text-foreground">1. Разместите силы.</strong>{" "}
-                Откройте «Соединения» → «Добавить соединение». Выберите тип и
-                точку на карте.
-              </p>
+                <strong className="text-foreground">{t("1. Разместите силы.")}</strong>{" "}{t("Откройте «Соединения» → «Добавить соединение». Выберите тип и точку на карте.")}</p>
               <p>
-                <strong className="text-foreground">2. Отдайте приказ.</strong>{" "}
-                Нажмите на знак соединения. В инспекторе выберите «Движение» или
-                «Атака», затем укажите точку.
-              </p>
+                <strong className="text-foreground">{t("2. Отдайте приказ.")}</strong>{" "}{t("Нажмите на знак соединения. В инспекторе выберите «Движение» или «Атака», затем укажите точку.")}</p>
               <p>
-                <strong className="text-foreground">3. Запустите время.</strong>{" "}
-                Используйте кнопку внизу или пробел, когда фокус на карте. Esc
-                отменяет выбор точки.
-              </p>
-              <p>
-                Клавиатура: стрелки перемещают карту, Enter выбирает её центр.
-                Ctrl/⌘ + B открывает список войск.
-              </p>
-              <p className="rounded-lg bg-muted p-3 text-xs">
-                Поддержка работает автоматически после остановки в радиусе союзника. Разведка передаёт цели своей стороне. Видимость маркеров в песочнице не означает обнаружение для огня. Симуляция и военные знаки условные. Соответствие официальным
-                обозначениям ВС Казахстана не подтверждено.
-              </p>
+                <strong className="text-foreground">{t("3. Запустите время.")}</strong>{" "}{t("Используйте кнопку внизу или пробел, когда фокус на карте. Esc отменяет выбор точки.")}</p>
+              <p>{t("Клавиатура: стрелки перемещают карту, Enter выбирает её центр. Ctrl/⌘ + B открывает список войск.")}</p>
+              <p className="rounded-lg bg-muted p-3 text-xs">{t("Поддержка работает автоматически после остановки в радиусе союзника. Разведка передаёт цели своей стороне. Видимость маркеров в песочнице не означает обнаружение для огня. Симуляция и военные знаки условные. Соответствие официальным обозначениям ВС Казахстана не подтверждено.")}</p>
             </div>
           )}
         </DialogContent>
