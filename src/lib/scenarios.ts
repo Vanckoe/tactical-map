@@ -1,3 +1,4 @@
+import { borderTerritory } from "./border-territory";
 import type { Unit } from "./simulation";
 import { kinds, type Kind, type Echelon } from "./unit-balance";
 import { offset, type TerrainZone } from "./terrain";
@@ -11,7 +12,7 @@ export type Scenario = {
   supplyDisabled?: boolean;
   borderPatrol?: {
     intruderId: string; entry: Position; captureRadiusKm: number; detectionRadiusKm: number;
-    territory: { south: number; north: number; west: number; east: number };
+    territory: { south: number; north: number; west: number; east: number; polygon: [number, number][] };
     outposts: (Position & { name: string })[];
   };
 };
@@ -73,7 +74,7 @@ function createBorderPatrol(): Scenario {
     description: "От пограничников РФ поступило сообщение: человек незаконно пересёк границу на линии железной дороги. В игре нарушитель представлен одним отделением мотопехоты. На заставах Афонькино, Белое и Мамлют — по три взвода мотопехоты. Задержите нарушителя до его прибытия в Петропавл. Снабжение и огонь отключены. Граница и место входа условные, для игровой механики.",
     borderPatrol: {
       intruderId: "10", entry: { lat: 55.005, lng: 68.23 }, captureRadiusKm: 0.6, detectionRadiusKm: 1.5,
-      territory: { south: 54.7, north: 55.15, west: 68.21, east: 69.4 }, outposts,
+      territory: borderTerritory, outposts,
     },
     units: [
       ...outposts.flatMap((base, i) => [-1, 0, 1].map((spread, j): Unit => ({

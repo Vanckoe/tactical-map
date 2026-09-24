@@ -164,7 +164,7 @@ export default function TacticalMap({
       .addTo(g).bindTooltip("A", { permanent: true, direction: "top" });
     if (scenario?.borderPatrol) {
       const { territory, entry, outposts } = scenario.borderPatrol;
-      L.rectangle([[territory.south, territory.west], [territory.north, territory.east]], {
+      L.polygon(territory.polygon, {
         color: "#987838", weight: 2, dashArray: "8 6", fill: false, interactive: false,
       }).addTo(g);
       L.circleMarker([entry.lat, entry.lng], { radius: 5, color: "#987838", interactive: false })

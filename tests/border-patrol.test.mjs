@@ -2,6 +2,7 @@ import { test, expect } from "bun:test";
 import { getScenario } from "../src/lib/scenarios.ts";
 import { newBattle, tickBattle, resumeBotControl } from "../src/lib/battle.ts";
 import { insideTerritory, intruderVisible, observedUnits } from "../src/lib/border-patrol.ts";
+import { distanceKm, pointInPolygon, segmentInPolygon } from "../src/lib/geo.ts";
 import { offset } from "../src/lib/terrain.ts";
 import { tickUnits } from "../src/lib/simulation.ts";
 const scenario = getScenario("petropavl-border");
@@ -122,7 +123,7 @@ test("city arrival wins immediately but simultaneous capture takes precedence", 
 });
 
 test("entry is remembered through serialization and blocks exit with manual orders", () => {
-  const state = newBattle([{ ...intruder, lng: scenario.borderPatrol.territory.west - 0.00001, target: [intruder.lat, 68.23] }], scenario.id);
+  const state = newBattle([{ ...intruder, lng: 68.21858648805677 - 0.00001, target: [intruder.lat, 68.23] }], scenario.id);
   const entered = tickBattle(state, 1, false);
   expect(entered.borderEntered).toBe(true);
   const saved = JSON.parse(JSON.stringify(entered));
@@ -184,4 +185,27 @@ test("the complete default scenario is winnable by a bot against idle outposts",
   const result = tickBattle(newBattle(scenario.units, scenario.id), scenario.timeLimitSeconds, true);
   expect(result.borderOutcome).toBe("escaped");
   expect(result.units.every((u) => u.hp === 100 && u.supply === 100)).toBe(true);
+});
+
+
+test("expanded territory reaches 5 km west and follows the Kazakhstan border", () => {
+  const territory = scenario.borderPatrol.territory;
+  expect(distanceKm({ lat: 54.925, lng: 68.21 }, { lat: 54.925, lng: territory.west })).toBeCloseTo(5, 4);
+  expect(insideTerritory({ lat: 54.8, lng: territory.west }, scenario)).toBe(true);
+  expect(insideTerritory({ lat: 54.8, lng: territory.west - 0.001 }, scenario)).toBe(false);
+  expect(insideTerritory({ lat: 55.1, lng: 68.15 }, scenario)).toBe(false);
+  expect(insideTerritory({ lat: 55.005, lng: 68.218 }, scenario)).toBe(false);
+  expect(insideTerritory({ lat: 55.005, lng: 68.219 }, scenario)).toBe(true);
+  for (const point of [...scenario.borderPatrol.outposts, ...scenario.objectives]) {
+    expect(insideTerritory(point, scenario)).toBe(true);
+  }
+});
+
+test("movement cannot cut across a concave border even with both endpoints inside", () => {
+  const polygon = [[0, 0], [0, 3], [3, 3], [3, 2], [1, 2], [1, 1], [3, 1], [3, 0]];
+  const from = { lat: 2, lng: 0.5 }, to = { lat: 2, lng: 2.5 };
+  expect(pointInPolygon(from, polygon)).toBe(true);
+  expect(pointInPolygon(to, polygon)).toBe(true);
+  expect(segmentInPolygon(from, to, polygon)).toBe(false);
+  expect(segmentInPolygon(from, { lat: 0.5, lng: 0.5 }, polygon)).toBe(true);
 });

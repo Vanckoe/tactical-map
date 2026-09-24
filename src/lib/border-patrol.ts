@@ -1,4 +1,4 @@
-import { distanceKm, moveToward, type Position } from "./geo";
+import { distanceKm, moveToward, pointInPolygon, segmentInPolygon, type Position } from "./geo";
 import { offset } from "./terrain";
 import { detectedBySide, tickUnits, type Unit } from "./simulation";
 import type { Scenario } from "./scenarios";
@@ -28,7 +28,7 @@ export function observedUnits(state: Battle, scenario?: Scenario, botEnabled = t
 
 export function insideTerritory(point: Position, scenario: Scenario): boolean {
   const bounds = scenario.borderPatrol?.territory;
-  return !!bounds && point.lat >= bounds.south && point.lat <= bounds.north && point.lng >= bounds.west && point.lng <= bounds.east;
+  return !!bounds && point.lat >= bounds.south && point.lat <= bounds.north && point.lng >= bounds.west && point.lng <= bounds.east && pointInPolygon(point, bounds.polygon);
 }
 
 /** Generic game steering in the explicitly schematic play area. */
@@ -39,7 +39,7 @@ function steerIntruder(intruder: Unit, units: Unit[], scenario: Scenario, entere
     const visible = units.filter((u) => u.side === "blue" && u.hp > 0 && detectedBySide(u, "red", units));
     if (visible.length) {
       const forward = moveToward(intruder, goal, 1);
-      const candidates = [forward, ...Array.from({ length: 16 }, (_, i) => offset(intruder, Math.cos(i * Math.PI / 8), Math.sin(i * Math.PI / 8)))].filter((p) => insideTerritory(p, scenario));
+      const candidates = [forward, ...Array.from({ length: 16 }, (_, i) => offset(intruder, Math.cos(i * Math.PI / 8), Math.sin(i * Math.PI / 8)))].filter((p) => segmentInPolygon(intruder, p, scenario.borderPatrol!.territory.polygon));
       const score = (point: Position) => distanceKm(point, goal) + visible.reduce((penalty, guard) => penalty + Math.max(0, 3 - distanceKm(point, guard)) * 4, 0);
       destination = candidates.sort((a, b) => score(a) - score(b))[0] ?? intruder;
     }
@@ -55,7 +55,7 @@ export function tickBorderPatrol(state: Battle, scenario: Scenario, botEnabled: 
   const commanded = botEnabled ? available.map((u) => u.id === rules.intruderId && u.hp > 0 && (state.seconds % 10 === 0 || !u.target)
     ? steerIntruder(u, available, scenario, entered) : u) : available;
   const units = tickUnits(commanded, 1, scenario.terrain, { supplyDisabled: true, combatDisabled: true }).map((u) => {
-    if (u.id !== rules.intruderId || !entered || insideTerritory(u, scenario) || !oldIntruder) return u;
+    if (u.id !== rules.intruderId || !entered || !oldIntruder || segmentInPolygon(oldIntruder, u, rules.territory.polygon)) return u;
     // Reject even a manual route leaving the play area after the first entry.
     return { ...u, lat: oldIntruder.lat, lng: oldIntruder.lng, target: undefined, route: undefined, patrol: undefined, order: "Выход за границу запрещён" };
   });
