@@ -1,5 +1,6 @@
 "use client";
 import { useI18n } from "@/components/i18n/language-provider";
+import { useTheme } from "@/components/theme-provider";
 
 import Link from "next/link";
 import { useRef, type Ref } from "react";
@@ -13,6 +14,7 @@ import {
   Flag,
   Layers,
   Maximize,
+  Moon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,6 +38,7 @@ export function ScenarioMenu({
   triggerRef: Ref<HTMLButtonElement>;
 }) {
   const { t } = useI18n();
+  const { theme, setTheme } = useTheme();
   const openingPicker = useRef(false);
   return (
     <DropdownMenu>
@@ -86,6 +89,19 @@ export function ScenarioMenu({
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => game.setModal("help")}>
           <BookOpen />{t("Как играть")}</DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel>{t("Настройки")}</DropdownMenuLabel>
+        <DropdownMenuCheckboxItem
+          checked={theme === "dark"}
+          onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+          onSelect={(event) => event.preventDefault()}
+          className="pr-2 [&>[data-slot=dropdown-menu-checkbox-item-indicator]]:hidden"
+        >
+          <Moon />{t("Тёмная тема")}
+          <span aria-hidden="true" className={`ml-auto inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 ${theme === "dark" ? "bg-primary" : "bg-input"}`}>
+            <span className={`size-4 rounded-full bg-background shadow-sm transition-transform motion-reduce:transition-none ${theme === "dark" ? "translate-x-4" : "translate-x-0"}`} />
+          </span>
+        </DropdownMenuCheckboxItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           variant="destructive"

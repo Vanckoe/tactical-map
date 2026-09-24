@@ -5,6 +5,8 @@ import { translate } from "@/lib/i18n/translate";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SymbolProvider } from "@/components/symbology/symbol-provider";
+import { ThemeProvider } from "@/components/theme-provider";
+import { cookies } from "next/headers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,12 +28,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const locale = await getLocale();
+  const theme = (await cookies()).get("dala-theme")?.value === "dark" ? "dark" : "light";
   return (
     <html
       lang={locale}
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased${theme === "dark" ? " dark" : ""}`}
     >
-      <body className="min-h-full flex flex-col"><LanguageProvider initialLocale={locale}><SymbolProvider>{children}</SymbolProvider></LanguageProvider></body>
+      <body className="min-h-full flex flex-col"><ThemeProvider initialTheme={theme}><LanguageProvider initialLocale={locale}><SymbolProvider>{children}</SymbolProvider></LanguageProvider></ThemeProvider></body>
     </html>
   );
 }

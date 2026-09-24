@@ -4,6 +4,9 @@
 
 @custom-variant dark (&:is(.dark *));
 :root {
+  color-scheme: light;
+  --map-background: #e8ece4;
+  --map-tile-filter: saturate(0.55);
   --border: oklch(0.922 0 0);
   --muted: oklch(0.97 0 0);
   --accent: oklch(0.97 0 0);
@@ -82,20 +85,23 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  color-scheme: dark;
+  --map-background: #303634;
+  --map-tile-filter: invert(1) hue-rotate(180deg) saturate(0.35) brightness(0.95) contrast(0.75);
+  --background: oklch(0.27 0.005 90);
+  --foreground: oklch(0.87 0.008 90);
+  --card: oklch(0.30 0.005 90);
+  --card-foreground: oklch(0.87 0.008 90);
+  --popover: oklch(0.30 0.005 90);
+  --popover-foreground: oklch(0.87 0.008 90);
+  --primary: oklch(0.80 0.008 90);
+  --primary-foreground: oklch(0.30 0.005 90);
+  --secondary: oklch(0.35 0.005 90);
+  --secondary-foreground: oklch(0.87 0.008 90);
+  --muted: oklch(0.35 0.005 90);
+  --muted-foreground: oklch(0.72 0.006 90);
+  --accent: oklch(0.35 0.005 90);
+  --accent-foreground: oklch(0.87 0.008 90);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
@@ -104,13 +110,13 @@
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --chart-5: oklch(0.35 0.005 90);
+  --sidebar: oklch(0.30 0.005 90);
+  --sidebar-foreground: oklch(0.87 0.008 90);
+  --sidebar-primary: oklch(0.80 0.008 90);
+  --sidebar-primary-foreground: oklch(0.87 0.008 90);
+  --sidebar-accent: oklch(0.35 0.005 90);
+  --sidebar-accent-foreground: oklch(0.87 0.008 90);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 }
@@ -149,11 +155,11 @@ button:disabled {
 .map-canvas {
   position: absolute;
   inset: 0;
-  background: #e8ece4;
+  background: var(--map-background);
   z-index: 0;
 }
 .map-canvas .leaflet-tile-pane {
-  filter: saturate(0.55);
+  filter: var(--map-tile-filter);
 }
 .unit-marker.contact-lost {
   filter: grayscale(1);
@@ -286,10 +292,10 @@ button:disabled {
   align-items: center;
   gap: 8px;
   font-size: 10px;
-  color: #525b50;
-  background: #ffffffdd;
+  color: var(--muted-foreground);
+  background: var(--background);
   padding: 5px 8px;
-  border: 1px solid #ffffff80;
+  border: 1px solid var(--border);
   border-radius: 6px;
   pointer-events: none;
 }
@@ -331,9 +337,9 @@ button:disabled {
   filter: drop-shadow(0 2px 2px #0004);
 }
 .unit-marker > span {
-  background: #ffffffed;
-  border: 1px solid #d1d5db;
-  color: #374151;
+  background: var(--background);
+  border: 1px solid var(--border);
+  color: var(--foreground);
   font-family: monospace;
   font-size: 9px;
   white-space: nowrap;
@@ -344,17 +350,17 @@ button:disabled {
   content: "";
   position: absolute;
   inset: -4px -2px 15px;
-  border: 2px solid #171717;
+  border: 2px solid var(--foreground);
   border-radius: 5px;
-  box-shadow: 0 0 0 2px #fff;
+  box-shadow: 0 0 0 2px var(--background);
 }
 .unit-marker.disabled {
   opacity: 0.4;
 }
 .map-canvas .leaflet-control-attribution {
   font-size: 9px;
-  background: #ffffffe6;
-  color: #666;
+  background: var(--background);
+  color: var(--muted-foreground);
 }
 .map-canvas .leaflet-control-scale {
   margin-left: 20px;
@@ -362,15 +368,16 @@ button:disabled {
 }
 .map-canvas .leaflet-control-scale-line {
   font-size: 9px;
-  background: #ffffffe6;
-  border-color: #64705d;
+  background: var(--background);
+  border-color: var(--muted-foreground);
+  color: var(--foreground);
 }
 .map-loading {
   height: 100%;
   display: grid;
   place-items: center;
-  background: #e8ece4;
-  color: #60685d;
+  background: var(--map-background);
+  color: var(--muted-foreground);
   font-size: 13px;
 }
 .map-canvas:focus-visible {
@@ -593,4 +600,22 @@ button:disabled {
 
 @media (max-width: 767px) {
   .workspace-header .language-switch { position: absolute; top: 58px; left: 0; height: 34px; padding: 0 10px; font-size: 11px; }
+}
+
+.dark .leaflet-tooltip,
+.dark .leaflet-popup-content-wrapper,
+.dark .leaflet-popup-tip {
+  background: var(--popover);
+  border-color: var(--border);
+  color: var(--popover-foreground);
+}
+.dark .leaflet-tooltip-top::before { border-top-color: var(--popover); }
+.dark .leaflet-tooltip-bottom::before { border-bottom-color: var(--popover); }
+.dark .leaflet-tooltip-left::before { border-left-color: var(--popover); }
+.dark .leaflet-tooltip-right::before { border-right-color: var(--popover); }
+.dark .leaflet-control-attribution a { color: #8fc5ec; }
+.dark .symbol-status.available {
+  color: #94d8b7;
+  background: #19352b;
+  border-color: #315b49;
 }
