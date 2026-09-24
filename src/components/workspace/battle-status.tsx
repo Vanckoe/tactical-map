@@ -16,7 +16,7 @@ export function BattleStatus({ game }: { game: Sandbox }) {
       <p>{t(game.botEnabled ? "Бот включён" : "Бот выключен")}</p>
       <p className="tabular-nums">{t("До конца ")}<strong>{time(Math.max(0, scenario.timeLimitSeconds - battle.seconds))}</strong></p>
       <p>{t(intruderVisible(battle.units, scenario) ? "Нарушитель в поле зрения" : battle.lastKnownIntruder ? "Контакт потерян. Серый маркер — последнее известное место." : "Нарушитель пока не обнаружен")}</p>
-      <p className="text-xs leading-5">{t("Обзор взвода — 5 км. Внешний круг показывает обзор, внутренний — задержание на 600 м.")}</p>
+      <p className="text-xs leading-5">{t("Обзор взвода — 1.5 км. Внешний круг показывает обзор, внутренний — задержание на 600 м.")}</p>
       <p className="text-xs text-muted-foreground">{t("Снабжение отключено для всех сторон")}</p>
       <p className="text-xs leading-5">{t("Для задержания подведите любой взвод к нарушителю на 600 м. Стрельба отключена. Нарушитель побеждает при входе в отмеченную зону Петропавла; удерживать город не требуется.")}</p>
       <details className="text-xs leading-5"><summary className="cursor-pointer">{t("Обстановка и правила")}</summary>
