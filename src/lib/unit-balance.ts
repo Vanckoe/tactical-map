@@ -1,5 +1,5 @@
 /** Abstract game balance. Values are not equipment specifications. */
-export const KIND_IDS = ["infantry", "armor", "artillery", "air", "drone", "airdefense", "recon", "antitank", "engineer", "logistics", "medical", "ew"] as const;
+export const KIND_IDS = ["infantry", "armor", "artillery", "air", "drone", "airdefense", "recon", "antitank", "engineer", "logistics", "medical", "ew", "transport"] as const;
 export type Kind = (typeof KIND_IDS)[number];
 export const ECHELONS = ["Отделение", "Взвод", "Рота", "Батальон", "Полк", "Бригада", "Дивизия"] as const;
 export type Echelon = (typeof ECHELONS)[number];
@@ -20,6 +20,7 @@ const ground: UnitProfile = {
 };
 const specialists: readonly Echelon[] = ["Взвод", "Рота", "Батальон"];
 export const UNIT_PROFILES: Record<Kind, UnitProfile> = {
+  transport: { ...ground, label: "Транспорт", short: "тр", role: "support", speedKph: 100, rangeKm: 0, damagePerSecond: 0, detectionKm: 1.5, defense: 10, echelons: ["Взвод"], description: "Перевозит до пяти взводов мотопехоты. Посадка и высадка занимают 5 игровых минут. Не атакует." },
   infantry: { ...ground, label: "Мотопехота", short: "мсб", description: "Универсальное наземное подразделение. В движении стреляет менее эффективно; на месте постепенно укрепляет позицию." },
   armor: { ...ground, label: "Танковые", short: "тб", rangeKm: 2.5, defense: 65, speedKph: 39, durability: 1900, damagePerSecond: 15, movementCost: 1.1, firingCost: 0.12, description: "Защищённая ударная сила против наземных целей. Расходует больше снабжения на движение, уязвима для противотанковых частей." },
   artillery: { ...ground, label: "Артиллерия", short: "адн", rangeKm: 12, minRangeKm: 2, detectionKm: 2, deploySeconds: 30, fireOnMove: false, defense: 10, speedKph: 24, durability: 850, damagePerSecond: 20, firingCost: 0.3, echelons: ["Взвод", "Рота", "Батальон", "Полк", "Бригада"], description: "Огонь только с развёрнутой позиции по обнаруженным союзниками наземным целям. Есть мёртвая зона; движение сбрасывает развёртывание. Сильно подавляет цель." },
@@ -43,7 +44,7 @@ export function getUnitStats(unit: { kind: Kind; echelon: Echelon }): UnitStats 
     speedKph: p.speedKph, durability: p.durability * size, supplyCapacity: p.supplyCapacity * size };
 }
 export function damageMultiplier(attacker: Kind, target: Kind): number {
-  if (attacker === "medical" || attacker === "logistics" || attacker === "ew" || attacker === "drone") return 0;
+  if (attacker === "transport" || attacker === "medical" || attacker === "logistics" || attacker === "ew" || attacker === "drone") return 0;
   if (attacker === "airdefense") return target === "air" ? 1.5 : target === "drone" ? 1.2 : 0;
   if (UNIT_PROFILES[target].airborne) return 0;
   if (attacker === "antitank") return target === "armor" ? 2 : 0.35;

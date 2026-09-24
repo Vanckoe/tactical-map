@@ -34,7 +34,7 @@ export function ScenarioPicker({ game, onClose }: {
             <h3 className="text-sm font-semibold">{t(scenario.name)}</h3>
             {game.battle.scenarioId === scenario.id && <span className="text-xs text-muted-foreground">{t("Текущий")}</span>}
           </div>
-          <p className="text-sm text-muted-foreground">{t(scenario.borderPatrol ? "Три заставы, девять взводов. Задержите нарушителя до его прибытия в Петропавл. Снабжение отключено." : scenario.attackerSide === "blue" ? `Займите город и удерживайте его ${scenario.holdSeconds / 60} минут.` : "Удержите город до конца времени и дождитесь резервов.")}</p>
+          <p className="text-sm text-muted-foreground">{t(scenario.borderPatrol?.starts ? "Три взвода в поиске, три в транспорте в Петропавле. Найдите нарушителя до его прибытия в Булаево." : scenario.borderPatrol ? "Три заставы, девять взводов. Задержите нарушителя до его прибытия в Петропавл. Снабжение отключено." : scenario.attackerSide === "blue" ? `Займите город и удерживайте его ${scenario.holdSeconds / 60} минут.` : "Удержите город до конца времени и дождитесь резервов.")}</p>
           <div className="flex items-center justify-between gap-3">
             <span className="text-xs text-muted-foreground">{scenario.timeLimitSeconds / 60}{t(" игровых минут")}</span>
             <Button size="sm" variant="outline" aria-label={t(`Начать: ${scenario.name}`)} onClick={() => start(scenario.id)}>{t("Начать")}</Button>

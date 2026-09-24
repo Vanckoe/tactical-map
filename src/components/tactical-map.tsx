@@ -12,6 +12,7 @@ import type { Scenario } from "@/lib/scenarios";
 import type { Battle } from "@/lib/battle";
 import { isWorkspaceShortcut } from "@/lib/keyboard";
 import { planRoute, type Waypoint } from "@/lib/terrain";
+import { TRANSFER_SECONDS } from "@/lib/transport";
 import { UNIT_PROFILES } from "@/lib/unit-balance";
 type Props = {
   scenario?: Scenario;
@@ -22,6 +23,7 @@ type Props = {
   onSelect: (id: string) => void;
   onMapClick: (lat: number, lng: number, shiftKey: boolean) => void;
   placing: boolean;
+  running: boolean;
   patrolStart?: Waypoint;
   grid: boolean;
   routes: boolean;
@@ -35,7 +37,7 @@ export default function TacticalMap({
   selected,
   onSelect,
   onMapClick,
-  placing,
+  placing, running,
   patrolStart,
   grid,
   routes,
@@ -48,6 +50,8 @@ export default function TacticalMap({
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const group = useRef<L.LayerGroup | null>(null);
+  const previousUnits = useRef(new Set<string>());
+  const previousProgress = useRef(new Map<string, number>());
   const handlers = useRef({ onSelect, onMapClick });
   useEffect(() => {
     handlers.current = { onSelect, onMapClick };
@@ -167,7 +171,8 @@ export default function TacticalMap({
       L.polygon(territory.polygon, {
         color: "#987838", weight: 2, dashArray: "8 6", fill: false, interactive: false,
       }).addTo(g);
-      L.circleMarker([entry.lat, entry.lng], { radius: 5, color: "#987838", interactive: false })
+      if (scenario.borderPatrol.searchArea) L.polygon(scenario.borderPatrol.searchArea, { color: "#987838", weight: 1, dashArray: "4 6", fillOpacity: 0.08, interactive: false }).addTo(g).bindTooltip(t("Первоначальный район поиска"), { permanent: true, direction: "top" });
+      else L.circleMarker([entry.lat, entry.lng], { radius: 5, color: "#987838", interactive: false })
         .addTo(g).bindTooltip(t("Сообщение: пересечение у ЖД"), { permanent: true, direction: "top" });
       outposts.forEach((post) => L.circleMarker([post.lat, post.lng], { radius: 4, color: affiliationColor(standard, "blue"), interactive: false })
         .addTo(g));
@@ -190,12 +195,16 @@ export default function TacticalMap({
       .filter((u) => enemies || u.side === "blue")
       .forEach((u) => {
         const active = u.id === selected;
+        const appearing = previousUnits.current.size > 0 && !previousUnits.current.has(u.id);
+        const progress = u.transportOperation ? 1 - u.transportOperation.remainingSeconds / TRANSFER_SECONDS : 0;
+        const oldProgress = previousProgress.current.get(u.id) ?? progress;
+        const ring = u.transportOperation ? `<svg class="transport-ring" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" class="transport-ring-track"/><circle cx="32" cy="32" r="29" pathLength="100" stroke-dasharray="100" stroke-dashoffset="${100 - progress * 100}" style="--ring-from:${100 - oldProgress * 100};--ring-to:${100 - progress * 100};animation:${running ? 'transport-fill .3s linear both' : 'none'}"/></svg>` : "";
         L.marker([u.lat, u.lng], {
           title: t(u.contactLost ? `${u.name} · Контакт потерян` : u.name),
           alt: t(u.contactLost ? `${u.name} · Контакт потерян` : u.name),
           icon: L.divIcon({
-            className: `unit-marker ${active ? "selected" : ""} ${u.hp <= 0 ? "disabled" : ""} ${u.contactLost ? "contact-lost" : ""}`,
-            html: `${symbolSvg(u.kind, u.side, standard, u.echelon)}<span>${u.id.padStart(2, "0")} / ${t(echelonLabel(u.kind, u.echelon))}</span>`,
+            className: `unit-marker ${active ? "selected" : ""} ${u.hp <= 0 ? "disabled" : ""} ${u.contactLost ? "contact-lost" : ""} ${appearing ? "unit-arriving" : ""}`,
+            html: `${ring}${symbolSvg(u.kind, u.side, standard, u.echelon)}<span>${u.kind === "transport" ? `${t("Транспорт")} ${u.passengerCount ?? 0}/5` : `${u.id.padStart(2, "0")} / ${t(echelonLabel(u.kind, u.echelon))}`}</span>`,
             iconSize: [56, 59],
             iconAnchor: [28, 27],
           }),
@@ -208,7 +217,7 @@ export default function TacticalMap({
             color: affiliationColor(standard, u.side, u.kind),
             weight: 1, fillOpacity: 0.035, interactive: false,
           }).addTo(g);
-        if (active && u.hp > 0 && !u.contactLost && (!scenario?.borderPatrol || u.side === "blue"))
+        if (active && u.kind !== "transport" && u.hp > 0 && !u.contactLost && (!scenario?.borderPatrol || u.side === "blue"))
           L.circle([u.lat, u.lng], {
             radius: (scenario?.borderPatrol ? scenario.borderPatrol.captureRadiusKm : getUnitStats(u).supportKm || getUnitStats(u).rangeKm || getUnitStats(u).detectionKm) * 1000,
             color: affiliationColor(standard, u.side, u.kind),
@@ -232,10 +241,12 @@ export default function TacticalMap({
             interactive: false,
           }).addTo(g);
       });
-  }, [units, selected, routes, enemies, standard, scenario, points, releasedReserves, patrolStart, t]);
+    previousUnits.current = new Set(units.map((u) => u.id));
+    previousProgress.current = new Map(units.filter((u) => u.transportOperation).map((u) => [u.id, 1 - u.transportOperation!.remainingSeconds / TRANSFER_SECONDS]));
+  }, [units, selected, routes, enemies, standard, scenario, points, releasedReserves, patrolStart, running, t]);
   useEffect(() => {
     if (scenario && focus[0] === scenario.center[0] && focus[1] === scenario.center[1]) {
-      const positions = [...scenario.units, ...scenario.objectives, ...scenario.reserves.flatMap((wave) => wave.units)];
+      const positions = [...scenario.units.filter((u) => !scenario.borderPatrol?.starts || u.side === "blue"), ...scenario.objectives, ...scenario.reserves.flatMap((wave) => wave.units)];
       map.current?.fitBounds(L.latLngBounds(positions.map((u) => [u.lat, u.lng])), { paddingTopLeft: [window.innerWidth > 900 ? 360 : 60, 180], paddingBottomRight: [150, 130], maxZoom: 12 });
     } else map.current?.flyTo(focus, scenario ? 12 : 10, { duration: 0.8 });
   }, [focus, scenario]);

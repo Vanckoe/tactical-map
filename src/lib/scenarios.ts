@@ -1,3 +1,4 @@
+import { bulaevoTerritory, bulaevoSearchArea } from "./bulaevo-territory";
 import { borderTerritory } from "./border-territory";
 import type { Unit } from "./simulation";
 import { kinds, type Kind, type Echelon } from "./unit-balance";
@@ -13,7 +14,9 @@ export type Scenario = {
   borderPatrol?: {
     intruderId: string; entry: Position; captureRadiusKm: number; detectionRadiusKm: number;
     territory: { south: number; north: number; west: number; east: number; polygon: [number, number][] };
-    outposts: (Position & { name: string })[];
+    outposts: (Position & { name: string; platoons?: number })[];
+    starts?: Position[];
+    searchArea?: [number, number][];
   };
 };
 // Offsets and forces describe fictional game situations, not actual deployments or terrain surveys.
@@ -87,11 +90,37 @@ function createBorderPatrol(): Scenario {
     objectives: [{ id: "city", name: "Петропавл", ...city, radiusKm: 1.6 }], reserves: [], terrain: [],
   };
 }
+function createLostTrail(): Scenario {
+  const city = { lat: 54.896056, lng: 70.448157 };
+  const base = { lat: 54.8734, lng: 69.1507 };
+  const outposts = [
+    { name: "Поисковая группа 1", lat: 55.07, lng: 70.05, platoons: 1 },
+    { name: "Поисковая группа 2", lat: 55.10, lng: 70.48, platoons: 1 },
+    { name: "Поисковая группа 3", lat: 54.96, lng: 70.58, platoons: 1 },
+  ];
+  const starts = [{ lat: 55.17, lng: 70.3 }, { lat: 55.23, lng: 70.45 }, { lat: 55.23, lng: 70.7 }];
+  const platoon = (id: string, name: string, position: Position): Unit => ({ id, name, ...position, kind: "infantry", echelon: "Взвод", side: "blue", hp: 100, supply: 100, order: "Удержание" });
+  return {
+    id: "bulaevo-lost-trail", name: "Булаево · Потерянный след", region: "Булаево",
+    center: [55.02, 69.95], attackerSide: "red", blueBase: base, redBase: starts[0],
+    timeLimitSeconds: 120 * 60, holdSeconds: 0, supplyDisabled: true,
+    description: "Сообщение о пересечении границы поступило с опозданием. Нарушитель уже в Казахстане и направляется к Булаево. Известен только общий район поиска. Три взвода ищут нарушителя; ещё три находятся в транспорте в Петропавле. Доставьте резерв и задержите нарушителя. Все позиции и события вымышлены.",
+    borderPatrol: { intruderId: "8", entry: starts[0], captureRadiusKm: 0.6, detectionRadiusKm: 1.5, territory: bulaevoTerritory, starts, searchArea: bulaevoSearchArea, outposts },
+    units: [
+      ...outposts.map((post, i) => platoon(String(i + 1), post.name, post)),
+      ...[4, 5, 6].map((id): Unit => ({ ...platoon(String(id), `Резерв · Взвод ${id - 3}`, base), carrierId: "7", order: "В транспорте" })),
+      { id: "7", name: "Петропавл · Транспорт", ...base, kind: "transport", echelon: "Взвод", side: "blue", hp: 100, supply: 100, order: "Удержание" },
+      { id: "8", name: "Нарушитель", ...starts[0], kind: "infantry", echelon: "Отделение", side: "red", hp: 100, supply: 100, order: "К городу" },
+    ],
+    objectives: [{ id: "city", name: "Булаево", ...city, radiusKm: 1.6 }], terrain: [], reserves: [],
+  };
+}
 export const SCENARIOS: Scenario[] = [
   createScenario("esik-attack", "Есик", [43.355, 77.462], "blue", [-27, 13], [10, 3], 120, 48, 0),
   createScenario("kaskelen-defense", "Каскелен", [43.202, 76.623], "red", [-24, 18], [9, 7], 115, 42, 1),
   createScenario("talgar-attack", "Талгар", [43.303, 77.239], "blue", [8, 29], [-11, 2], 125, 55, 2),
   createScenario("esik-defense", "Есик", [43.355, 77.462], "red", [-29, 8], [12, 4], 120, 50, 2),
   createBorderPatrol(),
+  createLostTrail(),
 ];
 export const getScenario = (id: string) => SCENARIOS.find((s) => s.id === id);

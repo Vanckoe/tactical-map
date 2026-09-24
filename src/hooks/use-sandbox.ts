@@ -3,11 +3,12 @@ import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } 
 import { isWorkspaceShortcut } from "@/lib/keyboard";
 import { insideTerritory, observedUnits } from "@/lib/border-patrol";
 import { initialUnits, kinds, Kind, Unit } from "@/lib/simulation";
-import { newBattle, tickBattle, resumeBotControl } from "@/lib/battle";
+import { newBattle, startScenario, tickBattle, resumeBotControl } from "@/lib/battle";
 import { getScenario } from "@/lib/scenarios";
 import { terrainAt, planRoute, type Waypoint } from "@/lib/terrain";
-import { distanceKm } from "@/lib/geo";
+import { distanceKm, segmentInPolygon } from "@/lib/geo";
 import { UNIT_PROFILES, type Echelon, isEchelon } from "@/lib/unit-balance";
+import { beginTransportOperation, cancelTransportOperation, releaseTransport, transportLocked, validTransportState, type TransportOperation } from "@/lib/transport";
 export const regions: Record<string, [number, number]> = {
   "Алматинская область": [43.36, 77.07],
   Есик: [43.355, 77.462],
@@ -18,6 +19,7 @@ export const regions: Record<string, [number, number]> = {
   Бишкек: [42.87, 74.6],
   Ташкент: [41.3, 69.24],
   Петропавл: [54.8734, 69.1507],
+  Булаево: [54.896056, 70.448157],
 };
 export function useSandbox() {
   const [focus, setFocus] = useState<[number, number]>(
@@ -71,7 +73,7 @@ export function useSandbox() {
   }
   const removeSelectedUnit = useCallback(() => {
     if (!unit || scenario?.borderPatrol || battle.winner || (botEnabled && unit.side === "red")) return;
-    setBattle((old) => ({ ...old, units: old.units.filter((u) => u.id !== unit.id) }));
+    setBattle((old) => ({ ...old, units: releaseTransport(old.units, unit.id, { terrain: scenario?.terrain }).filter((u) => u.id !== unit.id) }));
     setSelected("");
     setCommand(false);
     setLogs((logs) => [`Удалено: ${unit.name}`, ...logs].slice(0, 30));
@@ -124,6 +126,11 @@ export function useSandbox() {
     setLogs((l) => [message, ...l].slice(0, 30));
   }
   function onMapClick(lat: number, lng: number, shiftKey = false) {
+    if (command && unit && transportLocked(unit, units)) return;
+    if (command && unit && scenario?.borderPatrol?.starts) {
+      const origin = patrolDraft?.start ? { lat: patrolDraft.start[0], lng: patrolDraft.start[1] } : unit;
+      if (!segmentInPolygon(origin, { lat, lng }, scenario.borderPatrol.territory.polygon)) { setToast("Маршрут выходит за игровую границу."); return; }
+    }
     if (scenario?.borderPatrol && command && unit?.contactLost) return;
     if (scenario?.borderPatrol && battle.borderEntered && command && unit?.side === "red" && !insideTerritory({ lat, lng }, scenario)) { setToast("После входа выход за игровую границу запрещён."); return; }
     if (placing && scenario) { setToast("Состав сил задан сценарием. Для размещения выберите свободную песочницу."); return; }
@@ -246,6 +253,7 @@ export function useSandbox() {
                 Math.abs(u.target[1]) <= 180)) &&
             kinds.some((k) => k.id === u.kind),
         ) ||
+        !validTransportState(data.units) ||
         !regions[data.region]
       )
         throw Error();
@@ -281,13 +289,26 @@ export function useSandbox() {
   }
   function selectScenario(id: string) {
     const chosen = getScenario(id);
-    setBattle(newBattle(chosen?.units ?? initialUnits, chosen?.id ?? "sandbox"));
+    setBattle(chosen ? startScenario(chosen) : newBattle(initialUnits));
     setBotEnabled(!!chosen);
     setMode(chosen ? "game" : "sandbox");
     setRegion(chosen?.region ?? "Алматинская область");
     setFocus(chosen?.center ?? [...regions["Алматинская область"]]);
     setSelected(""); setPlacing(false); setCommand(false); setRunning(false); setSide("blue"); setModal("");
     setLogs([chosen?.borderPatrol ? chosen.description : chosen ? `${chosen.name}: ${chosen.attackerSide === "blue" ? "Займите город и удерживайте его 15 минут" : "Удержите город до истечения времени"}. Резервы вводятся по расписанию. Противником управляет бот.` : "Песочница готова"]);
+  }
+  function transfer(type: TransportOperation["type"], ids: string[]) {
+    if (!unit || battle.winner || (botEnabled && unit.side === "red")) return;
+    const area = { terrain: scenario?.terrain, polygon: scenario?.borderPatrol?.territory.polygon };
+    const next = beginTransportOperation(units, unit.id, type, ids, area);
+    if (next === units) { setToast("Операция недоступна: проверьте остановку, расстояние и свободные места."); return; }
+    setUnits((current) => beginTransportOperation(current, unit.id, type, ids, area));
+    setCommand(false);
+    setToast(type === "board" ? "Посадка начата: 5 игровых минут." : "Высадка начата: 5 игровых минут.");
+  }
+  function cancelTransfer() {
+    if (!unit || battle.winner || (botEnabled && unit.side === "red")) return;
+    setUnits((current) => cancelTransportOperation(current, unit.id));
   }
   function reset() { selectScenario(battle.scenarioId); }
   const time = `${String(6 + Math.floor(seconds / 3600)).padStart(2, "0")}:${String(Math.floor(seconds / 60) % 60).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
@@ -339,6 +360,8 @@ export function useSandbox() {
     log,
     onMapClick,
     removeSelectedUnit,
+    transfer,
+    cancelTransfer,
     save,
     load,
     reset,

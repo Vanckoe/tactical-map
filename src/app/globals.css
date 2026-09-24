@@ -619,3 +619,29 @@ button:disabled {
   background: #19352b;
   border-color: #315b49;
 }
+
+/* Transfer progress follows simulated time; no perpetual animation on pause. */
+.unit-marker > svg.transport-ring {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  left: -8px;
+  top: -12px;
+  overflow: visible;
+  transform: rotate(-90deg);
+  pointer-events: none;
+  fill: none;
+  stroke: var(--foreground);
+  stroke-width: 2.5;
+}
+.transport-ring-track { opacity: .15; }
+@keyframes transport-fill {
+  from { stroke-dashoffset: var(--ring-from); }
+  to { stroke-dashoffset: var(--ring-to); }
+}
+.transport-progress { height: 6px; accent-color: var(--foreground); }
+.unit-arriving { animation: unit-arrival .35s ease-out both; }
+@keyframes unit-arrival { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .unit-arriving, .transport-ring circle { animation: none !important; }
+}

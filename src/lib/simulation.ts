@@ -1,7 +1,8 @@
+import { tickTransport, transportLocked, type TransportOperation } from "./transport";
 import { type Kind, type Echelon, getUnitStats, UNIT_PROFILES, damageMultiplier } from "./unit-balance";
 import { planRoute, terrainSpeed, terrainCover, type TerrainZone, type Waypoint } from "./terrain";
 export { kinds } from "./unit-balance";
-import { distanceKm, moveToward } from "./geo";
+import { distanceKm, moveToward, segmentInPolygon } from "./geo";
 export type { Kind, Echelon } from "./unit-balance";
 export type Unit = {
   id: string;
@@ -14,6 +15,8 @@ export type Unit = {
   hp: number;
   supply: number;
   order: string;
+  carrierId?: string;
+  transportOperation?: TransportOperation;
   target?: [number, number];
   advance?: boolean;
   route?: Waypoint[];
@@ -135,13 +138,15 @@ export const initialUnits: Unit[] = [
 ];
 export { symbolSvg } from "./symbology";
 /** One-second phases keep 50× identical to fifty 1× updates. */
-export type SimulationRules = { supplyDisabled?: boolean; combatDisabled?: boolean };
+export type SimulationRules = { supplyDisabled?: boolean; combatDisabled?: boolean; territory?: readonly (readonly [number, number])[]; constrainMovement?: boolean };
 export function tickUnits(units: Unit[], elapsedSeconds: number, terrain: TerrainZone[] = [], rules: SimulationRules = {}): Unit[] {
   if (!Number.isFinite(elapsedSeconds) || elapsedSeconds <= 0) return units;
   let next = units;
   for (let remaining = elapsedSeconds; remaining > 0; remaining -= Math.min(1, remaining)) {
     const available = rules.supplyDisabled ? next.map((u) => ({ ...u, supply: 100 })) : next;
-    next = stepUnits(available, Math.min(1, remaining), terrain, rules);
+    const active = stepUnits(available.filter((u) => !u.carrierId), Math.min(1, remaining), terrain, rules);
+    const activeById = new Map(active.map((u) => [u.id, u]));
+    next = tickTransport(available.map((u) => activeById.get(u.id) ?? u), Math.min(1, remaining), { terrain, polygon: rules.territory });
     if (rules.supplyDisabled) next = next.map((u) => ({ ...u, supply: 100 }));
   }
   return next;
@@ -152,8 +157,9 @@ function jammed(u: Unit, units: Unit[]) {
   return u.kind === "drone" && units.some((other) => other.side !== u.side && other.kind === "ew" && ready(other) && distanceKm(u, other) <= UNIT_PROFILES.ew.supportKm);
 }
 export function detectedBySide(target: Unit, side: Unit["side"], units: Unit[], disrupted = new Set(units.filter((u) => jammed(u, units)).map((u) => u.id))) {
+  if (target.carrierId) return false;
   return units.some((observer) => {
-    if (observer.side !== side || observer.hp <= 0 || observer.supply <= 0) return false;
+    if (observer.carrierId || observer.side !== side || observer.hp <= 0 || observer.supply <= 0) return false;
     const p = UNIT_PROFILES[observer.kind];
     // Radar range applies to air contacts, not to ground observation.
     const range = observer.kind === "airdefense" && !UNIT_PROFILES[target.kind].airborne ? 3 : p.detectionKm;
@@ -165,7 +171,7 @@ function stepUnits(units: Unit[], dt: number, terrain: TerrainZone[], rules: Sim
   const disruptedBefore = new Set(units.filter((u) => jammed(u, units)).map((u) => u.id));
   const contacts = new Set(units.filter((u) => u.hp > 0 && detectedBySide(u, u.side === "blue" ? "red" : "blue", units, disruptedBefore)).map((u) => u.id));
   const moved = units.map((u) => {
-    if (u.hp <= 0) return { ...u };
+    if (u.hp <= 0 || transportLocked(u, units)) return { ...u };
     const p = UNIT_PROFILES[u.kind];
     const next = { ...u, order: "Удержание", stationarySeconds: Math.min(3600, (u.stationarySeconds ?? 0) + dt), suppression: clamp((u.suppression ?? 0) - dt * 0.8), entrenchment: u.entrenchment ?? 0, recoverableHp: u.recoverableHp ?? 0 };
     const contact = !rules.combatDisabled && u.advance && units.some((other) => other.side !== u.side && other.hp > 0 && contacts.has(other.id) && damageMultiplier(u.kind, other.kind) > 0 && distanceKm(u, other) <= p.rangeKm && distanceKm(u, other) >= p.minRangeKm);
@@ -178,7 +184,9 @@ function stepUnits(units: Unit[], dt: number, terrain: TerrainZone[], rules: Sim
       const destination = { lat: waypoint[0], lng: waypoint[1] };
       const distance = distanceKm(u, destination);
       const step = Math.min(distance, p.speedKph * (p.airborne ? 1 : terrainSpeed(u, terrain)) * (disruptedBefore.has(u.id) ? 0.5 : 1) * (1 - next.suppression / 150) * dt / 3600, u.supply / p.movementCost);
-      Object.assign(next, moveToward(u, destination, step));
+      const position = moveToward(u, destination, step);
+      if (rules.constrainMovement && rules.territory && !segmentInPolygon(u, position, rules.territory)) return { ...next, target: undefined, route: undefined, patrol: undefined, order: "Выход за границу запрещён" };
+      Object.assign(next, position);
       next.supply = clamp(next.supply - step * p.movementCost);
       if (step > 0) { movedIds.add(u.id); next.stationarySeconds = 0; next.entrenchment = 0; }
       if (step >= distance) {

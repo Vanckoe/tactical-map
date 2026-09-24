@@ -29,6 +29,8 @@ import {
 import UnitSymbol from "@/components/unit-symbol";
 import { UnitStats } from "@/components/workspace/unit-stats";
 import { UNIT_PROFILES, echelonLabel } from "@/lib/unit-balance";
+import { TransportControls } from "./transport-controls";
+import { transportLocked } from "@/lib/transport";
 import { Sandbox } from "@/hooks/use-sandbox";
 export function UnitInspector({
   game,
@@ -104,14 +106,14 @@ export function UnitInspector({
       </div>
       <div className="grid grid-cols-2 gap-1.5 border-y p-3">
         <Button
-          disabled={u.contactLost || u.hp <= 0 || (game.botEnabled && u.side === "red") || !!game.battle.winner}
+          disabled={transportLocked(u, game.units) || u.contactLost || u.hp <= 0 || (game.botEnabled && u.side === "red") || !!game.battle.winner}
           variant={game.command ? "secondary" : "outline"}
           className="h-14 flex-col gap-1 text-[11px]"
           onClick={() => move()}
         >
           <MoveUpRight />{t("Движение")}</Button>
         <Button
-          disabled={u.contactLost || u.hp <= 0 || (game.botEnabled && u.side === "red") || !!game.battle.winner}
+          disabled={transportLocked(u, game.units) || u.contactLost || u.hp <= 0 || (game.botEnabled && u.side === "red") || !!game.battle.winner}
           variant="outline"
           className="h-14 flex-col gap-1 text-[11px]"
           onClick={() => {
@@ -128,7 +130,7 @@ export function UnitInspector({
         >
           <Shield />{t("Удерживать")}</Button>
         <Button
-          disabled={u.contactLost || u.hp <= 0 || (game.botEnabled && u.side === "red") || !!game.battle.winner}
+          disabled={transportLocked(u, game.units) || u.contactLost || u.hp <= 0 || (game.botEnabled && u.side === "red") || !!game.battle.winner}
           variant={u.patrol ? "secondary" : "outline"}
           className="h-14 flex-col gap-1 text-[11px]"
           onClick={() => {
@@ -140,13 +142,14 @@ export function UnitInspector({
         >
           <Repeat2 />{t("Патрулирование")}</Button>
         <Button
-          disabled={!!game.scenario?.borderPatrol || u.hp <= 0 || UNIT_PROFILES[u.kind].damagePerSecond === 0 || (game.botEnabled && u.side === "red") || !!game.battle.winner}
+          disabled={transportLocked(u, game.units) || !!game.scenario?.borderPatrol || u.hp <= 0 || UNIT_PROFILES[u.kind].damagePerSecond === 0 || (game.botEnabled && u.side === "red") || !!game.battle.winner}
           variant="outline"
           className="h-14 flex-col gap-1 text-[11px]"
           onClick={() => move(true)}
         >
           <Target />{t("Атака")}</Button>
       </div>
+      {u.kind === "transport" && <TransportControls key={u.id} game={game} carrier={u} />}
       <div className="space-y-3 p-4">
         {[
           { label: "Боеспособность", value: u.hp },
@@ -166,7 +169,7 @@ export function UnitInspector({
         <AccordionItem value="stats">
           <AccordionTrigger className="py-3 text-xs font-normal">{t("Боевые характеристики")}</AccordionTrigger>
           <AccordionContent>
-            {game.scenario?.borderPatrol && <p className="mb-3 text-xs">{t("Для задержания подведите любой взвод к нарушителю на 600 м. Стрельба отключена. Нарушитель побеждает при входе в отмеченную зону Петропавла; удерживать город не требуется.")}</p>}
+            {game.scenario?.borderPatrol && <p className="mb-3 text-xs">{t("Для задержания подведите любой взвод к нарушителю на 600 м. Стрельба отключена. Нарушитель побеждает при входе в отмеченную зону города; удерживать город не требуется.")}</p>}
             <UnitStats kind={u.kind} echelon={u.echelon} supplyDisabled={game.scenario?.supplyDisabled} detectionRadiusKm={u.side === "blue" ? game.scenario?.borderPatrol?.detectionRadiusKm : undefined} />
           </AccordionContent>
         </AccordionItem>

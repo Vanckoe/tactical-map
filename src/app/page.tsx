@@ -85,6 +85,7 @@ function Workspace() {
         onSelect={selectUnit}
         onMapClick={game.onMapClick}
         placing={game.placing}
+        running={game.running}
         patrolStart={game.command ? game.patrolDraft?.start : undefined}
         grid={game.grid}
         routes={game.routes}

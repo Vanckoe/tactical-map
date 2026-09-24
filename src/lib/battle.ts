@@ -1,3 +1,4 @@
+import { transportLocked } from "./transport";
 import { detectedBySide, tickUnits, type Unit } from "./simulation";
 import { UNIT_PROFILES, damageMultiplier } from "./unit-balance";
 import { distanceKm, moveToward, type Position } from "./geo";
@@ -13,7 +14,7 @@ export function newBattle(units: Unit[], scenarioId = "sandbox"): Battle {
     ...(scenario?.borderPatrol ? { borderEntered: units.some((u) => u.id === scenario.borderPatrol!.intruderId && insideTerritory(u, scenario)) } : {}),
     points: Object.fromEntries((scenario?.objectives ?? []).map((o) => [o.id, { owner: defender, progress: defender === "blue" ? 15 : -15, contested: false }])) };
 }
-const canCapture = (u: Unit) => u.hp > 0 && u.supply > 0 && !UNIT_PROFILES[u.kind].airborne && UNIT_PROFILES[u.kind].damagePerSecond > 0;
+const canCapture = (u: Unit) => !u.carrierId && u.hp > 0 && u.supply > 0 && !UNIT_PROFILES[u.kind].airborne && UNIT_PROFILES[u.kind].damagePerSecond > 0;
 export function resumeBotControl(state: Battle): Battle {
   const scenario = getScenario(state.scenarioId);
   if (!scenario || state.winner) return state;
@@ -29,8 +30,8 @@ function orderTo(u: Unit, destination: Position, scenario: Scenario, advance = f
 }
 /** Objective-based game AI. Only detected enemies influence decisions. No bonus stats. */
 export function commandEnemy(units: Unit[], scenario: Scenario, points: Battle["points"]): Unit[] {
-  const red = units.filter((u) => u.side === "red" && u.hp > 0).sort((a,b) => a.id.localeCompare(b.id));
-  const visible = units.filter((u) => u.side === "blue" && u.hp > 0 && detectedBySide(u, "red", units));
+  const red = units.filter((u) => u.side === "red" && u.hp > 0 && !transportLocked(u, units)).sort((a,b) => a.id.localeCompare(b.id));
+  const visible = units.filter((u) => !u.carrierId && u.side === "blue" && u.hp > 0 && detectedBySide(u, "red", units));
   const frontline = red.filter((u) => ["infantry", "armor", "antitank", "recon"].includes(u.kind));
   const assigned = new Map<string, number>();
   const updated = new Map<string, Unit>();
@@ -111,4 +112,11 @@ export function tickBattle(state: Battle, elapsed: number, botEnabled: boolean):
     next = { ...next, units, seconds, points, cityHeldSeconds, releasedReserves, winner };
   }
   return next;
+}
+
+/** Randomize only at explicit scenario start/reset; restoration calls newBattle directly. */
+export function startScenario(scenario: Scenario, random = Math.random): Battle {
+  const starts = scenario.borderPatrol?.starts;
+  const position = starts?.[Math.min(starts.length - 1, Math.max(0, Math.floor(random() * starts.length)))];
+  return newBattle(scenario.units.map((u) => position && u.id === scenario.borderPatrol?.intruderId ? { ...u, ...position } : u), scenario.id);
 }

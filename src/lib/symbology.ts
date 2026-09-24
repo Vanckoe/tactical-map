@@ -102,6 +102,7 @@ export function affiliationColor(
  * преимущественно в районе x 20..60 / y 27..51.
  */
 const natoShapes: Record<Kind, string> = {
+  transport: `<g fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 30h25v17H22zM47 36h8l6 6v5H47"/><circle cx="29" cy="49" r="4"/><circle cx="53" cy="49" r="4"/></g>`,
   /**
    * Infantry
    *
@@ -549,6 +550,7 @@ function renderNatoSymbol(
  * not a verified Armed Forces of Kazakhstan standard.
  */
 const kzShapes: Record<Kind, string> = {
+  transport: `<path d="M7 17h23v15H7zM30 23h8l5 5v4H30"/><circle cx="14" cy="34" r="3"/><circle cx="36" cy="34" r="3"/>`,
   recon: `
     <path d="M7 24L25 15L42 24L25 33Z"/>
     <circle cx="25" cy="24" r="4"/>

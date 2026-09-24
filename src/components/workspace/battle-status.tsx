@@ -10,7 +10,7 @@ export function BattleStatus({ game }: { game: Sandbox }) {
   const { scenario, battle } = game;
   if (!scenario) return null;
   if (scenario.borderPatrol) {
-    const result = battle.borderOutcome === "captured" ? "Нарушитель задержан. Победа пограничников." : battle.borderOutcome === "escaped" ? "Нарушитель достиг Петропавла. Победа противника." : battle.borderOutcome === "timeout" ? "Время поиска истекло. Ничья: нарушитель не задержан и не достиг города." : "Ваша задача: задержать нарушителя";
+    const result = battle.borderOutcome === "captured" ? "Нарушитель задержан. Победа пограничников." : battle.borderOutcome === "escaped" ? "Нарушитель достиг города. Победа противника." : battle.borderOutcome === "timeout" ? "Время поиска истекло. Ничья: нарушитель не задержан и не достиг города." : "Ваша задача: задержать нарушителя";
     return <section className="space-y-4 text-sm" aria-label={t("Состояние сценария")}>
       <strong className="block" role="status">{t(result)}</strong>
       <p>{t(game.botEnabled ? "Бот включён" : "Бот выключен")}</p>
@@ -18,11 +18,11 @@ export function BattleStatus({ game }: { game: Sandbox }) {
       <p>{t(!game.botEnabled ? "Ручное управление: все войска противника видны и доступны для приказов." : intruderVisible(battle.units, scenario) ? "Нарушитель в поле зрения" : battle.lastKnownIntruder ? "Контакт потерян. Серый маркер — последнее известное место." : "Нарушитель пока не обнаружен")}</p>
       <p className="text-xs leading-5">{t("Обзор взвода — 1.5 км. Внешний круг показывает обзор, внутренний — задержание на 600 м.")}</p>
       <p className="text-xs text-muted-foreground">{t("Снабжение отключено для всех сторон")}</p>
-      <p className="text-xs leading-5">{t("Для задержания подведите любой взвод к нарушителю на 600 м. Стрельба отключена. Нарушитель побеждает при входе в отмеченную зону Петропавла; удерживать город не требуется.")}</p>
+      <p className="text-xs leading-5">{t("Для задержания подведите любой взвод к нарушителю на 600 м. Стрельба отключена. Нарушитель побеждает при входе в отмеченную зону города; удерживать город не требуется.")}</p>
       <details className="text-xs leading-5"><summary className="cursor-pointer">{t("Обстановка и правила")}</summary>
         <p className="mt-2">{t(scenario.description)}</p>
-        <ul className="mt-2 space-y-1">{scenario.borderPatrol.outposts.map((post) => <li key={post.name}>{t(post.name)} — {t("3 взвода мотопехоты")}</li>)}</ul>
-        <p className="mt-2">{t("Игровая граница условная. После первого входа нарушитель остаётся внутри отмеченной территории. Лимит поиска — 180 игровых минут.")}</p>
+        <ul className="mt-2 space-y-1">{scenario.borderPatrol.outposts.map((post) => <li key={post.name}>{t(post.name)} — {post.platoons ?? 3} {t("взвода мотопехоты")}</li>)}</ul>
+        <p className="mt-2">{t("После входа нарушитель остаётся внутри отмеченной территории.")}</p>
       </details>
       {battle.winner && <Button className="w-full" size="sm" onClick={game.reset}>{t("Начать заново")}</Button>}
     </section>;
