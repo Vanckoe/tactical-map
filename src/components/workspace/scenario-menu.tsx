@@ -146,11 +146,13 @@ function LayerOptions({ game }: { game: Sandbox }) {
           label: "Показывать противника",
           value: game.enemies,
           set: game.setEnemies,
+          disabled: !!game.scenario && !game.botEnabled,
         },
       ].map((item) => (
         <DropdownMenuCheckboxItem
           key={item.label}
           checked={item.value}
+          disabled={item.disabled}
           onCheckedChange={item.set}
           onSelect={(e) => e.preventDefault()}
         >

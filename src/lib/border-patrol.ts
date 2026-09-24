@@ -14,12 +14,12 @@ export function intruderVisible(units: Unit[], scenario: Scenario): boolean {
 }
 
 /** All player-facing unit views use this projection, never hidden live positions. */
-export function observedUnits(state: Battle, scenario?: Scenario): ObservedUnit[] {
-  if (!scenario?.borderPatrol) return state.units;
+export function observedUnits(state: Battle, scenario?: Scenario, botEnabled = true): ObservedUnit[] {
+  if (!botEnabled || !scenario?.borderPatrol) return state.units;
   const visible = intruderVisible(state.units, scenario);
   return state.units.flatMap((u): ObservedUnit[] => {
     if (u.side === "blue") return [u];
-    if (visible) return [{ ...u, target: undefined, route: undefined, order: state.borderOutcome === "captured" ? "Задержан" : "Обнаружен" }];
+    if (visible) return [{ ...u, target: undefined, route: undefined, patrol: undefined, order: state.borderOutcome === "captured" ? "Задержан" : "Обнаружен" }];
     if (!state.lastKnownIntruder) return [];
     const original = scenario.units.find((unit) => unit.id === scenario.borderPatrol!.intruderId)!;
     return [{ ...original, lat: state.lastKnownIntruder.lat, lng: state.lastKnownIntruder.lng, contactLost: true, order: "Контакт потерян" }];
@@ -44,7 +44,7 @@ function steerIntruder(intruder: Unit, units: Unit[], scenario: Scenario, entere
       destination = candidates.sort((a, b) => score(a) - score(b))[0] ?? intruder;
     }
   }
-  return { ...intruder, target: [destination.lat, destination.lng], route: undefined, advance: false, order: entered ? "К Петропавлу" : "К границе" };
+  return { ...intruder, target: [destination.lat, destination.lng], route: undefined, patrol: undefined, advance: false, order: entered ? "К Петропавлу" : "К границе" };
 }
 
 export function tickBorderPatrol(state: Battle, scenario: Scenario, botEnabled: boolean): Battle {
@@ -57,7 +57,7 @@ export function tickBorderPatrol(state: Battle, scenario: Scenario, botEnabled: 
   const units = tickUnits(commanded, 1, scenario.terrain, { supplyDisabled: true, combatDisabled: true }).map((u) => {
     if (u.id !== rules.intruderId || !entered || insideTerritory(u, scenario) || !oldIntruder) return u;
     // Reject even a manual route leaving the play area after the first entry.
-    return { ...u, lat: oldIntruder.lat, lng: oldIntruder.lng, target: undefined, route: undefined, order: "Выход за границу запрещён" };
+    return { ...u, lat: oldIntruder.lat, lng: oldIntruder.lng, target: undefined, route: undefined, patrol: undefined, order: "Выход за границу запрещён" };
   });
   const intruder = units.find((u) => u.id === rules.intruderId);
   const borderEntered = entered || (!!intruder && insideTerritory(intruder, scenario));
@@ -67,7 +67,7 @@ export function tickBorderPatrol(state: Battle, scenario: Scenario, botEnabled: 
   const borderOutcome = captured ? "captured" : escaped ? "escaped" : seconds >= scenario.timeLimitSeconds ? "timeout" : undefined;
   return {
     ...state, units: units.map((u) => borderOutcome && u.id === rules.intruderId
-      ? { ...u, target: undefined, route: undefined, order: borderOutcome === "captured" ? "Задержан" : borderOutcome === "escaped" ? "Достиг Петропавла" : "Время истекло" } : u),
+      ? { ...u, target: undefined, route: undefined, patrol: undefined, order: borderOutcome === "captured" ? "Задержан" : borderOutcome === "escaped" ? "Достиг Петропавла" : "Время истекло" } : u),
     seconds, borderEntered, borderOutcome,
     lastKnownIntruder: intruder && intruderVisible(units, scenario) ? { lat: intruder.lat, lng: intruder.lng, seconds } : state.lastKnownIntruder,
     winner: borderOutcome === "captured" ? "blue" : borderOutcome === "escaped" ? "red" : borderOutcome === "timeout" ? "draw" : undefined,

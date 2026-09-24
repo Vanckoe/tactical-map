@@ -11,6 +11,8 @@ import { echelonLabel, getUnitStats } from "@/lib/unit-balance";
 import type { Scenario } from "@/lib/scenarios";
 import type { Battle } from "@/lib/battle";
 import { isWorkspaceShortcut } from "@/lib/keyboard";
+import { planRoute, type Waypoint } from "@/lib/terrain";
+import { UNIT_PROFILES } from "@/lib/unit-balance";
 type Props = {
   scenario?: Scenario;
   points: Battle["points"];
@@ -20,6 +22,7 @@ type Props = {
   onSelect: (id: string) => void;
   onMapClick: (lat: number, lng: number, shiftKey: boolean) => void;
   placing: boolean;
+  patrolStart?: Waypoint;
   grid: boolean;
   routes: boolean;
   focus: [number, number];
@@ -33,6 +36,7 @@ export default function TacticalMap({
   onSelect,
   onMapClick,
   placing,
+  patrolStart,
   grid,
   routes,
   focus,
@@ -156,6 +160,8 @@ export default function TacticalMap({
     const g = group.current;
     if (!g) return;
     g.clearLayers();
+    if (patrolStart) L.circleMarker(patrolStart, { radius: 6, color: affiliationColor(standard, "blue"), interactive: false })
+      .addTo(g).bindTooltip("A", { permanent: true, direction: "top" });
     if (scenario?.borderPatrol) {
       const { territory, entry, outposts } = scenario.borderPatrol;
       L.rectangle([[territory.south, territory.west], [territory.north, territory.east]], {
@@ -211,6 +217,13 @@ export default function TacticalMap({
             fillOpacity: 0.055,
             interactive: false,
           }).addTo(g);
+        if (routes && u.patrol && !u.contactLost) {
+          const [a, b] = u.patrol.points;
+          const path = planRoute({ lat: a[0], lng: a[1] }, { lat: b[0], lng: b[1] }, scenario?.terrain ?? [], UNIT_PROFILES[u.kind].airborne);
+          L.polyline([a, ...path], { color: affiliationColor(standard, u.side, u.kind), weight: 2, dashArray: "4 6", interactive: false }).addTo(g);
+          if (active) [a, b].forEach((point, index) => L.circleMarker(point, { radius: 5, color: affiliationColor(standard, u.side, u.kind), interactive: false })
+            .addTo(g).bindTooltip(index === 0 ? "A" : "Б", { permanent: true, direction: "top" }));
+        }
         if (routes && u.target)
           L.polyline([[u.lat, u.lng], ...(u.route ?? [u.target])], {
             color: affiliationColor(standard, u.side, u.kind),
@@ -219,7 +232,7 @@ export default function TacticalMap({
             interactive: false,
           }).addTo(g);
       });
-  }, [units, selected, routes, enemies, standard, scenario, points, releasedReserves, t]);
+  }, [units, selected, routes, enemies, standard, scenario, points, releasedReserves, patrolStart, t]);
   useEffect(() => {
     if (scenario && focus[0] === scenario.center[0] && focus[1] === scenario.center[1]) {
       const positions = [...scenario.units, ...scenario.objectives, ...scenario.reserves.flatMap((wave) => wave.units)];

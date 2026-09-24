@@ -14,12 +14,18 @@ export function newBattle(units: Unit[], scenarioId = "sandbox"): Battle {
     points: Object.fromEntries((scenario?.objectives ?? []).map((o) => [o.id, { owner: defender, progress: defender === "blue" ? 15 : -15, contested: false }])) };
 }
 const canCapture = (u: Unit) => u.hp > 0 && u.supply > 0 && !UNIT_PROFILES[u.kind].airborne && UNIT_PROFILES[u.kind].damagePerSecond > 0;
+export function resumeBotControl(state: Battle): Battle {
+  const scenario = getScenario(state.scenarioId);
+  if (!scenario || state.winner) return state;
+  const units = state.units.map((u) => u.side === "red" ? { ...u, target: undefined, route: undefined, patrol: undefined, advance: false, order: "Удержание" } : u);
+  return { ...state, units: scenario.borderPatrol ? units : commandEnemy(units, scenario, state.points) };
+}
 function orderTo(u: Unit, destination: Position, scenario: Scenario, advance = false): Unit {
-  if (distanceKm(u, destination) < 0.35) return u.target ? { ...u, target: undefined, route: undefined, advance: false } : u;
+  if (distanceKm(u, destination) < 0.35) return u.target ? { ...u, target: undefined, route: undefined, patrol: undefined, advance: false } : u;
   if (u.target && distanceKm({ lat: u.target[0], lng: u.target[1] }, destination) < 0.5) return u;
   const route = planRoute(u, destination, scenario.terrain, UNIT_PROFILES[u.kind].airborne);
   if (!route.length) return u;
-  return { ...u, target: [destination.lat, destination.lng], route, advance, stationarySeconds: 0, entrenchment: 0, order: "Приказ бота" };
+  return { ...u, target: [destination.lat, destination.lng], route, patrol: undefined, advance, stationarySeconds: 0, entrenchment: 0, order: "Приказ бота" };
 }
 /** Objective-based game AI. Only detected enemies influence decisions. No bonus stats. */
 export function commandEnemy(units: Unit[], scenario: Scenario, points: Battle["points"]): Unit[] {

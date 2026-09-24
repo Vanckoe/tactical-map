@@ -9,6 +9,7 @@ import {
   MoreHorizontal,
   Trash2,
   LocateFixed,
+  Repeat2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +41,7 @@ export function UnitInspector({
   const u = game.unit;
   if (!u) return null;
   function move(attack = false) {
+    game.setPatrolDraft(null);
     game.setAttackCommand(attack);
     game.setCommand(true);
     game.setPlacing(false);
@@ -100,7 +102,7 @@ export function UnitInspector({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="grid grid-cols-3 gap-1.5 border-y p-3">
+      <div className="grid grid-cols-2 gap-1.5 border-y p-3">
         <Button
           disabled={u.contactLost || u.hp <= 0 || (game.botEnabled && u.side === "red") || !!game.battle.winner}
           variant={game.command ? "secondary" : "outline"}
@@ -116,7 +118,7 @@ export function UnitInspector({
             game.setUnits((us) =>
               us.map((v) =>
                 v.id === u.id
-                  ? { ...v, target: undefined, route: undefined, advance: false, order: "Удержание" }
+                  ? { ...v, target: undefined, route: undefined, patrol: undefined, advance: false, order: "Удержание" }
                   : v,
               ),
             );
@@ -125,6 +127,18 @@ export function UnitInspector({
           }}
         >
           <Shield />{t("Удерживать")}</Button>
+        <Button
+          disabled={u.contactLost || u.hp <= 0 || (game.botEnabled && u.side === "red") || !!game.battle.winner}
+          variant={u.patrol ? "secondary" : "outline"}
+          className="h-14 flex-col gap-1 text-[11px]"
+          onClick={() => {
+            game.setPatrolDraft({});
+            game.setAttackCommand(false);
+            game.setCommand(true);
+            game.setPlacing(false);
+          }}
+        >
+          <Repeat2 />{t("Патрулирование")}</Button>
         <Button
           disabled={!!game.scenario?.borderPatrol || u.hp <= 0 || UNIT_PROFILES[u.kind].damagePerSecond === 0 || (game.botEnabled && u.side === "red") || !!game.battle.winner}
           variant="outline"

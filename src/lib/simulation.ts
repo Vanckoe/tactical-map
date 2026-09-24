@@ -17,6 +17,7 @@ export type Unit = {
   target?: [number, number];
   advance?: boolean;
   route?: Waypoint[];
+  patrol?: { points: [Waypoint, Waypoint]; next: 0 | 1; started: boolean };
   stationarySeconds?: number;
   entrenchment?: number;
   suppression?: number;
@@ -182,7 +183,14 @@ function stepUnits(units: Unit[], dt: number, terrain: TerrainZone[], rules: Sim
       if (step > 0) { movedIds.add(u.id); next.stationarySeconds = 0; next.entrenchment = 0; }
       if (step >= distance) {
         next.route.shift();
-        if (!next.route.length) { next.target = undefined; next.route = undefined; }
+        if (!next.route.length) {
+          next.route = undefined;
+          if (next.patrol) {
+            const nextPoint = next.patrol.next === 0 ? 1 : 0;
+            next.patrol = { ...next.patrol, next: nextPoint, started: true };
+            next.target = next.patrol.points[nextPoint];
+          } else next.target = undefined;
+        }
       }
       else next.order = "Движение";
     }
@@ -190,6 +198,7 @@ function stepUnits(units: Unit[], dt: number, terrain: TerrainZone[], rules: Sim
     if (!next.target && !p.airborne && next.supply > 0) next.entrenchment = clamp(next.entrenchment + dt / 120, 1);
     if (!p.fireOnMove && next.stationarySeconds < p.deploySeconds && !next.target) next.order = "Развёртывание";
     if (next.supply === 0) next.order = "Нет снабжения";
+    else if (next.patrol && next.order !== "Маршрут недоступен") next.order = next.patrol.started ? "Патрулирование" : "Выход на маршрут патруля";
     return next;
   });
   if (rules.combatDisabled) return moved;
@@ -217,7 +226,7 @@ function stepUnits(units: Unit[], dt: number, terrain: TerrainZone[], rules: Sim
     if (u.hp <= 0) return u;
     const hp = clamp(u.hp - incoming[i]);
     const recoverableHp = Math.min(100 - hp, (u.recoverableHp ?? 0) + (u.hp - hp) * 0.25);
-    return { ...u, hp, recoverableHp, suppression: clamp((u.suppression ?? 0) + pressure[i]), supply: clamp(u.supply - spent[i]), target: hp === 0 ? undefined : u.target,
+    return { ...u, hp, recoverableHp, suppression: clamp((u.suppression ?? 0) + pressure[i]), supply: clamp(u.supply - spent[i]), target: hp === 0 ? undefined : u.target, patrol: hp === 0 ? undefined : u.patrol,
       order: hp === 0 ? "Выведен из строя" : fired.has(i) ? "В бою" : incoming[i] > 0 ? "Под огнём" : u.order };
   });
   // Stable ID order makes shared support deterministic, independent of array order.

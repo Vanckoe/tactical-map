@@ -85,6 +85,7 @@ function Workspace() {
         onSelect={selectUnit}
         onMapClick={game.onMapClick}
         placing={game.placing}
+        patrolStart={game.command ? game.patrolDraft?.start : undefined}
         grid={game.grid}
         routes={game.routes}
         focus={focus}
@@ -177,7 +178,9 @@ function Workspace() {
           <span>
             {t(game.placing
               ? "Выберите точку размещения. Удерживайте Shift, чтобы добавить несколько соединений."
-              : "Укажите точку назначения")}
+              : game.patrolDraft
+                ? game.patrolDraft.start ? "Патруль: выберите точку Б" : "Патруль: выберите точку А"
+                : "Укажите точку назначения")}
           </span>
           <Button
             variant="ghost"

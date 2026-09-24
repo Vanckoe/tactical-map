@@ -1,6 +1,6 @@
 import { test, expect } from "bun:test";
 import { getScenario } from "../src/lib/scenarios.ts";
-import { newBattle, tickBattle } from "../src/lib/battle.ts";
+import { newBattle, tickBattle, resumeBotControl } from "../src/lib/battle.ts";
 import { insideTerritory, intruderVisible, observedUnits } from "../src/lib/border-patrol.ts";
 import { offset } from "../src/lib/terrain.ts";
 import { tickUnits } from "../src/lib/simulation.ts";
@@ -8,12 +8,44 @@ const scenario = getScenario("petropavl-border");
 const intruder = scenario.units.find((u) => u.side === "red");
 const guard = scenario.units[0];
 
-test("intruder starts hidden, detection reaches 5 km and capture stays 600 m", () => {
+test("manual control reveals live enemies and orders without recording a false contact", () => {
+  const state = newBattle(scenario.units, scenario.id);
+  const red = state.units.find((u) => u.side === "red");
+  red.target = [red.lat, red.lng + 0.01];
+  expect(observedUnits(state, scenario, true).some((u) => u.side === "red")).toBe(false);
+  const manual = observedUnits(state, scenario, false);
+  expect(manual).toEqual(state.units);
+  expect(manual.find((u) => u.side === "red").contactLost).toBeUndefined();
+  expect(state.lastKnownIntruder).toBeUndefined();
+  expect(observedUnits(state, scenario, true).some((u) => u.side === "red")).toBe(false);
+  const remembered = { ...state, lastKnownIntruder: { lat: red.lat, lng: red.lng - 0.02, seconds: 0 } };
+  expect(observedUnits(remembered, scenario, false).find((u) => u.side === "red").lng).toBe(red.lng);
+  const stale = observedUnits(remembered, scenario, true).find((u) => u.side === "red");
+  expect(stale.contactLost).toBe(true);
+  expect(stale.lng).toBe(remembered.lastKnownIntruder.lng);
+});
+
+test("resuming the bot cancels manual enemy patrol and restores AI without advancing time", () => {
+  const state = newBattle(scenario.units, scenario.id);
+  state.seconds = 3;
+  const red = state.units.find((u) => u.side === "red");
+  red.target = [red.lat, red.lng - 0.1];
+  red.patrol = { points: [red.target, [red.lat, red.lng]], next: 0, started: false };
+  const resumed = resumeBotControl(state);
+  expect(resumed.seconds).toBe(3);
+  expect(resumed.units.filter((u) => u.side === "blue")).toEqual(state.units.filter((u) => u.side === "blue"));
+  expect(resumed.units.find((u) => u.side === "red").patrol).toBeUndefined();
+  const next = tickBattle(resumed, 1, true).units.find((u) => u.side === "red");
+  expect(next.target).toEqual([scenario.borderPatrol.entry.lat, scenario.borderPatrol.entry.lng]);
+  expect(next.lng).toBeGreaterThan(red.lng);
+});
+
+test("intruder starts hidden, detection uses the configured radius and capture stays 600 m", () => {
   expect(observedUnits(newBattle(scenario.units, scenario.id), scenario).every((u) => u.side === "blue")).toBe(true);
   expect(scenario.borderPatrol.captureRadiusKm).toBe(0.6);
   const observer = { ...guard, ...scenario.borderPatrol.entry };
-  const near = { ...intruder, ...offset(observer, 4.99, 0) };
-  const far = { ...intruder, ...offset(observer, 5.01, 0) };
+  const near = { ...intruder, ...offset(observer, scenario.borderPatrol.detectionRadiusKm - 0.01, 0) };
+  const far = { ...intruder, ...offset(observer, scenario.borderPatrol.detectionRadiusKm + 0.01, 0) };
   expect(intruderVisible([observer, near], scenario)).toBe(true);
   expect(intruderVisible([observer, far], scenario)).toBe(false);
   expect(intruderVisible([{ ...observer, hp: 0 }, near], scenario)).toBe(false);
@@ -22,7 +54,7 @@ test("intruder starts hidden, detection reaches 5 km and capture stays 600 m", (
 
 test("lost contact freezes position, hides route, survives save and updates on reacquisition", () => {
   const observer = { ...guard, ...scenario.borderPatrol.entry };
-  const near = { ...intruder, ...offset(observer, 4, 0) };
+  const near = { ...intruder, ...offset(observer, scenario.borderPatrol.detectionRadiusKm * 0.8, 0) };
   const seen = tickBattle(newBattle([observer, near], scenario.id), 1, false);
   const far = { ...near, ...offset(observer, 6, 0), target: [55.005, 69] };
   const lost = tickBattle({ ...seen, units: [observer, far] }, 50, false);
@@ -35,7 +67,7 @@ test("lost contact freezes position, hides route, survives save and updates on r
   expect(marker.route).toBeUndefined();
   expect(observedUnits(JSON.parse(JSON.stringify(lost)), scenario)).toEqual(observedUnits(lost, scenario));
   const actual = lost.units.find((u) => u.side === "red");
-  const found = tickBattle({ ...lost, units: [{ ...observer, ...offset(actual, -2, 0) }, actual] }, 1, false);
+  const found = tickBattle({ ...lost, units: [{ ...observer, ...offset(actual, -scenario.borderPatrol.detectionRadiusKm * 0.8, 0) }, actual] }, 1, false);
   const refreshed = observedUnits(found, scenario).find((u) => u.side === "red");
   expect(refreshed.contactLost).not.toBe(true);
   expect(refreshed.lng).toBe(found.units.find((u) => u.side === "red").lng);
@@ -44,7 +76,7 @@ test("lost contact freezes position, hides route, survives save and updates on r
 
 test("last observation is identical at 1x and 50x when contact is lost mid-update", () => {
   const observer = { ...guard, ...scenario.borderPatrol.entry };
-  const near = { ...intruder, ...offset(observer, 4.9, 0), target: [55.005, 69] };
+  const near = { ...intruder, ...offset(observer, scenario.borderPatrol.detectionRadiusKm - 0.1, 0), target: [55.005, 69] };
   const state = newBattle([observer, near], scenario.id);
   let slow = state;
   for (let i = 0; i < 50; i++) slow = tickBattle(slow, 1, false);

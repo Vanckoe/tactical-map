@@ -3,9 +3,10 @@ import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } 
 import { isWorkspaceShortcut } from "@/lib/keyboard";
 import { insideTerritory, observedUnits } from "@/lib/border-patrol";
 import { initialUnits, kinds, Kind, Unit } from "@/lib/simulation";
-import { newBattle, tickBattle } from "@/lib/battle";
+import { newBattle, tickBattle, resumeBotControl } from "@/lib/battle";
 import { getScenario } from "@/lib/scenarios";
-import { terrainAt } from "@/lib/terrain";
+import { terrainAt, planRoute, type Waypoint } from "@/lib/terrain";
+import { distanceKm } from "@/lib/geo";
 import { UNIT_PROFILES, type Echelon, isEchelon } from "@/lib/unit-balance";
 export const regions: Record<string, [number, number]> = {
   "Алматинская область": [43.36, 77.07],
@@ -35,7 +36,12 @@ export function useSandbox() {
   const [kind, setKind] = useState<Kind>("infantry");
   const [echelon, setEchelon] = useState<Echelon>("Батальон");
   const [placing, setPlacing] = useState(false);
-  const [command, setCommand] = useState(false);
+  const [command, updateCommand] = useState(false);
+  const [patrolDraft, setPatrolDraft] = useState<{ start?: Waypoint } | null>(null);
+  const setCommand = useCallback((active: boolean) => {
+    updateCommand(active);
+    if (!active) setPatrolDraft(null);
+  }, [setPatrolDraft]);
   const [attackCommand, setAttackCommand] = useState(false);
   const [grid, setGrid] = useState(false);
   const [routes, setRoutes] = useState(true);
@@ -49,8 +55,20 @@ export function useSandbox() {
     "Соединения развёрнуты на исходных позициях",
   ]);
   const [mode, setMode] = useState("sandbox");
-  const visibleUnits = observedUnits(battle, scenario);
+  const visibleUnits = observedUnits(battle, scenario, botEnabled);
   const unit = visibleUnits.find((u) => u.id === selected);
+  function changeBotControl(enabled: boolean) {
+    if (!scenario || battle.winner || enabled === botEnabled) return;
+    if (enabled) {
+      setBattle(resumeBotControl);
+      if (units.some((u) => u.id === selected && u.side === "red")) {
+        setSelected("");
+        setCommand(false);
+      }
+      if (side === "red") setPlacing(false);
+    }
+    setBotEnabled(enabled);
+  }
   const removeSelectedUnit = useCallback(() => {
     if (!unit || scenario?.borderPatrol || battle.winner || (botEnabled && unit.side === "red")) return;
     setBattle((old) => ({ ...old, units: old.units.filter((u) => u.id !== unit.id) }));
@@ -101,7 +119,7 @@ export function useSandbox() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, []);
+  }, [setCommand]);
   function log(message: string) {
     setLogs((l) => [message, ...l].slice(0, 30));
   }
@@ -135,10 +153,36 @@ export function useSandbox() {
       log(`Размещено соединение: ${name}`);
       setToast("Соединение размещено");
     } else if (command && unit && unit.hp > 0) {
+      if (patrolDraft) {
+        if (!patrolDraft.start) {
+          if (!planRoute(unit, { lat, lng }, scenario?.terrain ?? [], UNIT_PROFILES[unit.kind].airborne).length) {
+            setToast("Маршрут недоступен"); return;
+          }
+          setPatrolDraft({ start: [lat, lng] });
+          return;
+        }
+        const start = patrolDraft.start;
+        if (distanceKm({ lat: start[0], lng: start[1] }, { lat, lng }) < 0.05) {
+          setToast("Точки патруля должны быть не ближе 50 м друг к другу."); return;
+        }
+        const terrain = scenario?.terrain ?? [];
+        const airborne = UNIT_PROFILES[unit.kind].airborne;
+        if (!planRoute(unit, { lat: start[0], lng: start[1] }, terrain, airborne).length || !planRoute({ lat: start[0], lng: start[1] }, { lat, lng }, terrain, airborne).length) {
+          setToast("Маршрут недоступен"); return;
+        }
+        setUnits((units) => units.map((u) => u.id === selected ? {
+          ...u, patrol: { points: [start, [lat, lng]], next: 0, started: false },
+          target: start, route: undefined, advance: false, stationarySeconds: 0, entrenchment: 0, order: "Выход на маршрут патруля",
+        } : u));
+        setCommand(false);
+        log(`${unit.name}: патрулирование А ↔ Б`);
+        setToast("Патруль задан. Соединение направится к точке А.");
+        return;
+      }
       setUnits((u) =>
         u.map((v) =>
           v.id === selected
-            ? { ...v, target: [lat, lng], route: undefined, advance: attackCommand, stationarySeconds: 0, entrenchment: 0, order: attackCommand ? "Сближение" : "Движение" }
+            ? { ...v, target: [lat, lng], route: undefined, patrol: undefined, advance: attackCommand, stationarySeconds: 0, entrenchment: 0, order: attackCommand ? "Сближение" : "Движение" }
             : v,
         ),
       );
@@ -186,6 +230,7 @@ export function useSandbox() {
             u.supply >= 0 &&
             u.supply <= 100 &&
             (u.route === undefined || (Array.isArray(u.route) && u.route.length <= 100 && u.route.every((p) => Array.isArray(p) && p.length === 2 && Number.isFinite(p[0]) && Math.abs(p[0]) <= 90 && Number.isFinite(p[1]) && Math.abs(p[1]) <= 180))) &&
+            (u.patrol === undefined || (u.patrol && Array.isArray(u.patrol.points) && u.patrol.points.length === 2 && u.patrol.points.every((p) => Array.isArray(p) && p.length === 2 && Number.isFinite(p[0]) && Math.abs(p[0]) <= 90 && Number.isFinite(p[1]) && Math.abs(p[1]) <= 180) && (u.patrol.next === 0 || u.patrol.next === 1) && typeof u.patrol.started === "boolean" && !!u.target && u.target[0] === u.patrol.points[u.patrol.next][0] && u.target[1] === u.patrol.points[u.patrol.next][1])) &&
             (u.advance === undefined || typeof u.advance === "boolean") &&
             [u.stationarySeconds, u.entrenchment, u.suppression, u.recoverableHp].every((value) => value === undefined || (Number.isFinite(value) && value >= 0)) &&
             (u.entrenchment === undefined || u.entrenchment <= 1) &&
@@ -247,7 +292,7 @@ export function useSandbox() {
   function reset() { selectScenario(battle.scenarioId); }
   const time = `${String(6 + Math.floor(seconds / 3600)).padStart(2, "0")}:${String(Math.floor(seconds / 60) % 60).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
   return {
-    battle, scenario, botEnabled, setBotEnabled, selectScenario,
+    battle, scenario, botEnabled, setBotEnabled: changeBotControl, selectScenario,
     focus,
     setFocus,
     units,
@@ -269,13 +314,15 @@ export function useSandbox() {
     placing,
     setPlacing,
     command,
+    patrolDraft,
+    setPatrolDraft,
     setCommand,
     setAttackCommand,
     grid,
     setGrid,
     routes,
     setRoutes,
-    enemies,
+    enemies: !!scenario && !botEnabled ? true : enemies,
     setEnemies,
     region,
     setRegion,
