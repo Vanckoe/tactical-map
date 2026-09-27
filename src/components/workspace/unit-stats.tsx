@@ -1,7 +1,7 @@
 "use client";
 import { useI18n } from "@/components/i18n/language-provider";
 import { getUnitStats, UNIT_PROFILES, type Kind, type Echelon } from "@/lib/unit-balance";
-export function UnitStats({ kind, echelon, supplyDisabled = false, detectionRadiusKm }: { kind: Kind; echelon: Echelon; supplyDisabled?: boolean; detectionRadiusKm?: number }) {
+export function UnitStats({ kind, echelon, supplyDisabled = false, detectionRadiusKm, speedKph }: { kind: Kind; echelon: Echelon; supplyDisabled?: boolean; detectionRadiusKm?: number; speedKph?: number }) {
   const { t } = useI18n();
   const stats = getUnitStats({ kind, echelon });
   const rows = [
@@ -11,7 +11,7 @@ export function UnitStats({ kind, echelon, supplyDisabled = false, detectionRadi
     ["Развёртывание", stats.deploySeconds ? `${stats.deploySeconds} с` : "Без задержки"],
     ["Урон при 100%", `${stats.damagePerSecond} ед/с`],
     ["Защита", `${stats.defense} (−${Math.round(stats.defense / (100 + stats.defense) * 100)}% урона)`],
-    ["Скорость", `${stats.speedKph} км/ч`],
+    ["Скорость", `${speedKph ?? stats.speedKph} км/ч`],
     ["Прочность", `${stats.durability} ед.`],
     ...(supplyDisabled ? [] : [["Запас ресурсов", `${stats.supplyCapacity} ед.`]]),
   ];

@@ -169,8 +169,8 @@ export function UnitInspector({
         <AccordionItem value="stats">
           <AccordionTrigger className="py-3 text-xs font-normal">{t("Боевые характеристики")}</AccordionTrigger>
           <AccordionContent>
-            {game.scenario?.borderPatrol && <p className="mb-3 text-xs">{t("Для задержания подведите любой взвод к нарушителю на 600 м. Стрельба отключена. Нарушитель побеждает при входе в отмеченную зону города; удерживать город не требуется.")}</p>}
-            <UnitStats kind={u.kind} echelon={u.echelon} supplyDisabled={game.scenario?.supplyDisabled} detectionRadiusKm={u.side === "blue" ? game.scenario?.borderPatrol?.detectionRadiusKm : undefined} />
+            {game.scenario?.borderPatrol && <p className="mb-3 text-xs">{t("Для задержания подведите подразделение мотопехоты к нарушителю на 600 м. Стрельба отключена. Нарушитель побеждает при входе в отмеченную зону города; удерживать город не требуется.")}</p>}
+            <UnitStats kind={u.kind} echelon={u.echelon} supplyDisabled={game.scenario?.supplyDisabled} speedKph={u.id === game.scenario?.borderPatrol?.intruderId ? game.scenario.borderPatrol.intruderSpeedKph : undefined} detectionRadiusKm={u.side === "blue" ? game.scenario?.borderPatrol?.detectionRadiusKm : game.scenario?.borderPatrol?.intruderDetectionRadiusKm} />
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="details" className="border-0">

@@ -3,6 +3,7 @@ import { distanceKm, pointInPolygon, type Position } from "./geo";
 import { offset, terrainAt, type TerrainZone } from "./terrain";
 
 export const TRANSPORT_CAPACITY = 5;
+const transportable = (u: Unit) => u.kind === "infantry" && (u.echelon === "Отделение" || u.echelon === "Взвод");
 export const TRANSFER_SECONDS = 300;
 export type TransportOperation = { type: "board" | "disembark"; unitIds: string[]; remainingSeconds: number };
 export type TransportArea = { terrain?: TerrainZone[]; polygon?: readonly (readonly [number, number])[] };
@@ -10,7 +11,7 @@ export const passengersOf = (units: Unit[], id: string) => units.filter((u) => u
 export const transportLocked = (u: Unit, units: Unit[]) => !!u.carrierId || !!u.transportOperation || units.some((v) => v.transportOperation?.unitIds.includes(u.id));
 export const stopUnit = (u: Unit): Unit => ({ ...u, target: undefined, route: undefined, patrol: undefined, advance: false, order: "Удержание" });
 export function boardableUnits(units: Unit[], carrier: Unit): Unit[] {
-  return units.filter((u) => u.kind === "infantry" && u.echelon === "Взвод" && u.hp > 0 && u.side === carrier.side && !transportLocked(u, units) && distanceKm(u, carrier) <= 0.1);
+  return units.filter((u) => transportable(u) && u.hp > 0 && u.side === carrier.side && !transportLocked(u, units) && distanceKm(u, carrier) <= 0.1);
 }
 function landingPositions(carrier: Position, count: number, area: TransportArea): Position[] {
   const valid = (p: Position) => terrainAt(p, area.terrain ?? []) !== "water" && (!area.polygon || pointInPolygon(p, area.polygon));
@@ -78,7 +79,7 @@ export function validTransportState(units: Unit[]): boolean {
   return units.every((u) => {
     if (u.carrierId !== undefined) {
       const carrier = units.find((v) => v.id === u.carrierId);
-      if (typeof u.carrierId !== "string" || !carrier || carrier.kind !== "transport" || carrier.hp <= 0 || carrier.side !== u.side || u.kind !== "infantry" || u.echelon !== "Взвод" || u.hp <= 0 || u.target || u.patrol || u.transportOperation) return false;
+      if (typeof u.carrierId !== "string" || !carrier || carrier.kind !== "transport" || carrier.hp <= 0 || carrier.side !== u.side || !transportable(u) || u.hp <= 0 || u.target || u.patrol || u.transportOperation) return false;
     }
     if (u.kind === "transport" && passengersOf(units, u.id).length > TRANSPORT_CAPACITY) return false;
     const op = u.transportOperation;
@@ -89,7 +90,7 @@ export function validTransportState(units: Unit[]): boolean {
       if (reserved.has(id)) return false;
       reserved.add(id);
       const p = units.find((v) => v.id === id);
-      return !!p && p.kind === "infantry" && p.echelon === "Взвод" && p.side === u.side && p.hp > 0 && !p.target && !p.patrol && (op.type === "board" ? !p.carrierId && distanceKm(p, u) <= 0.1 : p.carrierId === u.id);
+      return !!p && transportable(p) && p.side === u.side && p.hp > 0 && !p.target && !p.patrol && (op.type === "board" ? !p.carrierId && distanceKm(p, u) <= 0.1 : p.carrierId === u.id);
     });
   });
 }

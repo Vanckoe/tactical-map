@@ -138,7 +138,7 @@ export const initialUnits: Unit[] = [
 ];
 export { symbolSvg } from "./symbology";
 /** One-second phases keep 50× identical to fifty 1× updates. */
-export type SimulationRules = { supplyDisabled?: boolean; combatDisabled?: boolean; territory?: readonly (readonly [number, number])[]; constrainMovement?: boolean };
+export type SimulationRules = { speedKphByUnitId?: Readonly<Record<string, number>>; supplyDisabled?: boolean; combatDisabled?: boolean; territory?: readonly (readonly [number, number])[]; constrainMovement?: boolean };
 export function tickUnits(units: Unit[], elapsedSeconds: number, terrain: TerrainZone[] = [], rules: SimulationRules = {}): Unit[] {
   if (!Number.isFinite(elapsedSeconds) || elapsedSeconds <= 0) return units;
   let next = units;
@@ -183,7 +183,7 @@ function stepUnits(units: Unit[], dt: number, terrain: TerrainZone[], rules: Sim
       if (!waypoint) return { ...next, order: "Маршрут недоступен" };
       const destination = { lat: waypoint[0], lng: waypoint[1] };
       const distance = distanceKm(u, destination);
-      const step = Math.min(distance, p.speedKph * (p.airborne ? 1 : terrainSpeed(u, terrain)) * (disruptedBefore.has(u.id) ? 0.5 : 1) * (1 - next.suppression / 150) * dt / 3600, u.supply / p.movementCost);
+      const step = Math.min(distance, (rules.speedKphByUnitId?.[u.id] ?? p.speedKph) * (p.airborne ? 1 : terrainSpeed(u, terrain)) * (disruptedBefore.has(u.id) ? 0.5 : 1) * (1 - next.suppression / 150) * dt / 3600, u.supply / p.movementCost);
       const position = moveToward(u, destination, step);
       if (rules.constrainMovement && rules.territory && !segmentInPolygon(u, position, rules.territory)) return { ...next, target: undefined, route: undefined, patrol: undefined, order: "Выход за границу запрещён" };
       Object.assign(next, position);

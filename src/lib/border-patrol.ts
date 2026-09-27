@@ -34,10 +34,11 @@ export function insideTerritory(point: Position, scenario: Scenario): boolean {
 
 /** Generic game steering in the explicitly schematic play area. */
 function steerIntruder(intruder: Unit, units: Unit[], scenario: Scenario, entered: boolean): Unit {
+  const rules = scenario.borderPatrol!;
   const goal = entered ? scenario.objectives[0] : scenario.borderPatrol!.entry;
   let destination: Position = goal;
   if (entered) {
-    const visible = units.filter((u) => !u.carrierId && u.side === "blue" && u.hp > 0 && detectedBySide(u, "red", units));
+    const visible = units.filter((u) => !u.carrierId && u.side === "blue" && u.hp > 0 && (rules.intruderDetectionRadiusKm === undefined ? detectedBySide(u, "red", units) : distanceKm(u, intruder) <= rules.intruderDetectionRadiusKm));
     if (visible.length) {
       const forward = moveToward(intruder, goal, 1);
       const candidates = [forward, ...Array.from({ length: 16 }, (_, i) => offset(intruder, Math.cos(i * Math.PI / 8), Math.sin(i * Math.PI / 8)))].filter((p) => segmentInPolygon(intruder, p, scenario.borderPatrol!.territory.polygon));
@@ -55,7 +56,7 @@ export function tickBorderPatrol(state: Battle, scenario: Scenario, botEnabled: 
   const available = state.units.map((u) => ({ ...u, supply: 100 }));
   const commanded = botEnabled ? available.map((u) => u.id === rules.intruderId && u.hp > 0 && (state.seconds % 10 === 0 || !u.target)
     ? steerIntruder(u, available, scenario, entered) : u) : available;
-  const units = tickUnits(commanded, 1, scenario.terrain, { supplyDisabled: true, combatDisabled: true, territory: rules.territory.polygon, constrainMovement: !!rules.starts }).map((u) => {
+  const units = tickUnits(commanded, 1, scenario.terrain, { supplyDisabled: true, combatDisabled: true, territory: rules.territory.polygon, constrainMovement: !!rules.starts, speedKphByUnitId: rules.intruderSpeedKph === undefined ? undefined : { [rules.intruderId]: rules.intruderSpeedKph } }).map((u) => {
     if (u.id !== rules.intruderId || !entered || !oldIntruder || segmentInPolygon(oldIntruder, u, rules.territory.polygon)) return u;
     // Reject even a manual route leaving the play area after the first entry.
     return { ...u, lat: oldIntruder.lat, lng: oldIntruder.lng, target: undefined, route: undefined, patrol: undefined, order: "Выход за границу запрещён" };
@@ -68,7 +69,7 @@ export function tickBorderPatrol(state: Battle, scenario: Scenario, botEnabled: 
   const borderOutcome = captured ? "captured" : escaped ? "escaped" : seconds >= scenario.timeLimitSeconds ? "timeout" : undefined;
   return {
     ...state, units: units.map((u) => borderOutcome && u.id === rules.intruderId
-      ? { ...u, target: undefined, route: undefined, patrol: undefined, order: borderOutcome === "captured" ? "Задержан" : borderOutcome === "escaped" ? "Достиг Петропавла" : "Время истекло" } : u),
+      ? { ...u, target: undefined, route: undefined, patrol: undefined, order: borderOutcome === "captured" ? "Задержан" : borderOutcome === "escaped" ? "Достиг города" : "Время истекло" } : u),
     seconds, borderEntered, borderOutcome,
     lastKnownIntruder: intruder && intruderVisible(units, scenario) ? { lat: intruder.lat, lng: intruder.lng, seconds } : state.lastKnownIntruder,
     winner: borderOutcome === "captured" ? "blue" : borderOutcome === "escaped" ? "red" : borderOutcome === "timeout" ? "draw" : undefined,

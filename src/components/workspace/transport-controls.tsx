@@ -22,7 +22,7 @@ export function TransportControls({ game, carrier }: { game: Sandbox; carrier: U
   </label>);
   return <section className="space-y-3 border-b p-4" aria-label={t("Перевозка войск")}>
     <div className="flex justify-between text-sm font-medium"><h3>{t("Перевозка войск")}</h3><span className="tabular-nums">{passengers.length}/{TRANSPORT_CAPACITY}</span></div>
-    <p className="text-xs text-muted-foreground">{t("100 км/ч · Вместимость: 5 взводов")}</p>
+    <p className="text-xs text-muted-foreground">{t("100 км/ч · Вместимость: 5 отделений или взводов")}</p>
     {passengers.length ? <fieldset><legend className="text-xs text-muted-foreground">{t("В транспорте")}</legend>{list(passengers)}</fieldset> : <p className="text-xs text-muted-foreground">{t("Транспорт пуст")}</p>}
     {op ? <div className="space-y-2" role="status">
       <div className="flex justify-between text-xs"><span>{t(op.type === "board" ? "Посадка" : "Высадка")} · {op.unitIds.length}</span><span className="tabular-nums">{Math.floor(op.remainingSeconds / 60)}:{String(Math.ceil(op.remainingSeconds % 60)).padStart(2, "0")}</span></div>
@@ -31,8 +31,8 @@ export function TransportControls({ game, carrier }: { game: Sandbox; carrier: U
       <Button size="sm" variant="outline" disabled={disabled} onClick={game.cancelTransfer}>{t("Отменить операцию")}</Button>
     </div> : <>
       {nearby.length > 0 && <fieldset><legend className="text-xs text-muted-foreground">{t("Рядом · до 100 м")}</legend>{list(nearby)}</fieldset>}
-      <p className="text-xs text-muted-foreground">{t(carrier.target ? "Для посадки или высадки остановите транспорт." : "Выберите взводы. Посадка и высадка — по 5 игровых минут.")}</p>
-      {!nearby.length && <p className="text-xs text-muted-foreground">{t("Для посадки подведите взводы на 100 м к транспорту.")}</p>}
+      <p className="text-xs text-muted-foreground">{t(carrier.target ? "Для посадки или высадки остановите транспорт." : "Выберите подразделения. Посадка и высадка — по 5 игровых минут.")}</p>
+      {!nearby.length && <p className="text-xs text-muted-foreground">{t("Для посадки подведите подразделения на 100 м к транспорту.")}</p>}
       <div className="grid grid-cols-2 gap-2">
         <Button variant="outline" size="sm" disabled={disabled || !!carrier.target || !boarding.length || boarding.length + passengers.length > TRANSPORT_CAPACITY} onClick={() => { game.transfer("board", boarding.map((u) => u.id)); setSelected([]); }}>{t("Посадить")}{boarding.length ? ` (${boarding.length})` : ""}</Button>
         <Button variant="outline" size="sm" disabled={disabled || !!carrier.target || !leaving.length} onClick={() => { game.transfer("disembark", leaving.map((u) => u.id)); setSelected([]); }}>{t("Высадить")}{leaving.length ? ` (${leaving.length})` : ""}</Button>

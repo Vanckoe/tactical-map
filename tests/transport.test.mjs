@@ -104,10 +104,12 @@ test("malformed transport saves are rejected, legacy saves remain valid", () => 
   for (const units of [[platoon("p", { carrierId: "missing" })], [carrier, platoon("p", { carrierId: "t", side: "red" })], [carrier, ...Array.from({ length: 6 }, (_, i) => platoon(String(i), { carrierId: "t" }))], [{ ...carrier, transportOperation: { type: "board", unitIds: ["p", "p"], remainingSeconds: 300 } }, platoon("p")]]) expect(validTransportState(units)).toBe(false);
 });
 
-test("lost trail starts with three deployed platoons and three passengers in Petropavl", () => {
+test("lost trail starts with four deployed squads and three passengers in Petropavl", () => {
   const state = startScenario(scenario, () => 0.5);
-  expect(state.units.filter((u) => u.side === "blue" && u.kind === "infantry" && !u.carrierId)).toHaveLength(3);
+  expect(scenario.timeLimitSeconds).toBe(24 * 60 * 60);
+  expect(state.units.filter((u) => u.side === "blue" && u.kind === "infantry" && !u.carrierId)).toHaveLength(4);
   expect(passengersOf(state.units, "7")).toHaveLength(3);
+  expect(state.units.filter((u) => u.side === "blue" && u.kind === "infantry").every((u) => u.echelon === "Отделение")).toBe(true);
   expect(validTransportState(state.units)).toBe(true);
   expect(state.borderEntered).toBe(true);
   expect(intruderVisible(state.units, scenario)).toBe(false);

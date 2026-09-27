@@ -12,9 +12,9 @@ export type Scenario = {
   redBase: Position; blueBase: Position; attackerSide: Unit["side"]; timeLimitSeconds: number; holdSeconds: number;
   supplyDisabled?: boolean;
   borderPatrol?: {
-    intruderId: string; entry: Position; captureRadiusKm: number; detectionRadiusKm: number;
+    intruderId: string; entry: Position; captureRadiusKm: number; detectionRadiusKm: number; intruderDetectionRadiusKm?: number; intruderSpeedKph?: number;
     territory: { south: number; north: number; west: number; east: number; polygon: [number, number][] };
-    outposts: (Position & { name: string; platoons?: number })[];
+    outposts: (Position & { name: string; platoons?: number; squads?: number })[];
     starts?: Position[];
     searchArea?: [number, number][];
   };
@@ -94,21 +94,22 @@ function createLostTrail(): Scenario {
   const city = { lat: 54.896056, lng: 70.448157 };
   const base = { lat: 54.8734, lng: 69.1507 };
   const outposts = [
-    { name: "Поисковая группа 1", lat: 55.07, lng: 70.05, platoons: 1 },
-    { name: "Поисковая группа 2", lat: 55.10, lng: 70.48, platoons: 1 },
-    { name: "Поисковая группа 3", lat: 54.96, lng: 70.58, platoons: 1 },
+    { unitId: "1", name: "Поисковая группа 1", lat: 55.07, lng: 70.05, squads: 1 },
+    { unitId: "2", name: "Поисковая группа 2", lat: 55.10, lng: 70.48, squads: 1 },
+    { unitId: "3", name: "Поисковая группа 3", lat: 54.96, lng: 70.58, squads: 1 },
+    { unitId: "9", name: "Поисковая группа 4", lat: 55.08, lng: 70.23, squads: 1 },
   ];
-  const starts = [{ lat: 55.17, lng: 70.3 }, { lat: 55.23, lng: 70.45 }, { lat: 55.23, lng: 70.7 }];
-  const platoon = (id: string, name: string, position: Position): Unit => ({ id, name, ...position, kind: "infantry", echelon: "Взвод", side: "blue", hp: 100, supply: 100, order: "Удержание" });
+  const starts = [{ lat: 55.19, lng: 70.3 }, { lat: 55.20, lng: 70.45 }, { lat: 55.19, lng: 70.64 }];
+  const squad = (id: string, name: string, position: Position): Unit => ({ id, name, ...position, kind: "infantry", echelon: "Отделение", side: "blue", hp: 100, supply: 100, order: "Удержание" });
   return {
     id: "bulaevo-lost-trail", name: "Булаево · Потерянный след", region: "Булаево",
     center: [55.02, 69.95], attackerSide: "red", blueBase: base, redBase: starts[0],
-    timeLimitSeconds: 120 * 60, holdSeconds: 0, supplyDisabled: true,
-    description: "Сообщение о пересечении границы поступило с опозданием. Нарушитель уже в Казахстане и направляется к Булаево. Известен только общий район поиска. Три взвода ищут нарушителя; ещё три находятся в транспорте в Петропавле. Доставьте резерв и задержите нарушителя. Все позиции и события вымышлены.",
-    borderPatrol: { intruderId: "8", entry: starts[0], captureRadiusKm: 0.6, detectionRadiusKm: 1.5, territory: bulaevoTerritory, starts, searchArea: bulaevoSearchArea, outposts },
+    timeLimitSeconds: 24 * 60 * 60, holdSeconds: 0, supplyDisabled: true,
+    description: "Сообщение о пересечении границы поступило с опозданием. Нарушитель уже в Казахстане и направляется к Булаево. Известен только общий район поиска. Четыре отделения ищут нарушителя; ещё три находятся в транспорте в Петропавле. Обзор обеих сторон — 1.5 км. Скорость отделений — 28 км/ч, нарушителя — 24 км/ч. На поиск отведено 24 часа. Доставьте резерв и задержите нарушителя. Все позиции и события вымышлены.",
+    borderPatrol: { intruderId: "8", entry: starts[0], captureRadiusKm: 0.6, detectionRadiusKm: 1.5, intruderDetectionRadiusKm: 1.5, intruderSpeedKph: 24, territory: bulaevoTerritory, starts, searchArea: bulaevoSearchArea, outposts },
     units: [
-      ...outposts.map((post, i) => platoon(String(i + 1), post.name, post)),
-      ...[4, 5, 6].map((id): Unit => ({ ...platoon(String(id), `Резерв · Взвод ${id - 3}`, base), carrierId: "7", order: "В транспорте" })),
+      ...outposts.map((post) => squad(post.unitId, `${post.name} · Отделение 1`, post)),
+      ...[4, 5, 6].map((id): Unit => ({ ...squad(String(id), `Резерв · Отделение ${id - 3}`, base), carrierId: "7", order: "В транспорте" })),
       { id: "7", name: "Петропавл · Транспорт", ...base, kind: "transport", echelon: "Взвод", side: "blue", hp: 100, supply: 100, order: "Удержание" },
       { id: "8", name: "Нарушитель", ...starts[0], kind: "infantry", echelon: "Отделение", side: "red", hp: 100, supply: 100, order: "К городу" },
     ],
