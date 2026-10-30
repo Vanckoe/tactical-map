@@ -1,0 +1,23 @@
+
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="50"
+      height="42"
+      viewBox="0 0 50 42"
+      fill="none"
+    >
+      
+
+      <g
+        fill="white"
+        stroke="#242424"
+        stroke-width="1.9"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        
+    <path d="M9 30H41M15 30V20H35V30M20 20V15M30 20V15"/>
+  
+      </g>
+    </svg>
+  

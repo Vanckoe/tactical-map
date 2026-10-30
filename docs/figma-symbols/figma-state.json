@@ -1,0 +1,1091 @@
+{
+  "sectionId": "3:2",
+  "pageId": "0:1",
+  "fileKey": "xETgV3IcGzOILAB8vPHxky",
+  "phase": "catalog-created-symbols-await-source-verification",
+  "coverId": "3:30",
+  "foundationId": "3:58",
+  "sourcesId": "3:93",
+  "card": {
+    "createdNodeIds": [
+      "3:112",
+      "3:113",
+      "3:114",
+      "3:115",
+      "3:116",
+      "3:117",
+      "3:118",
+      "3:119",
+      "3:120",
+      "3:121"
+    ],
+    "componentId": "3:116",
+    "properties": {
+      "Название": "Название#3:0",
+      "Геометрия": "Геометрия#3:1",
+      "ID": "ID#3:2"
+    },
+    "boardId": "3:112",
+    "boardHeight": 512,
+    "cardHeight": 224
+  },
+  "atlas": {
+    "ys": [
+      7952,
+      6900,
+      8884
+    ],
+    "boards": [
+      {
+        "id": "3:122",
+        "category": "units",
+        "x": 48,
+        "y": 1760,
+        "height": 1252
+      },
+      {
+        "id": "3:196",
+        "category": "command",
+        "x": 1536,
+        "y": 1760,
+        "height": 1996
+      },
+      {
+        "id": "3:343",
+        "category": "march",
+        "x": 3024,
+        "y": 1760,
+        "height": 1748
+      },
+      {
+        "id": "3:464",
+        "category": "actions",
+        "x": 48,
+        "y": 3060,
+        "height": 2492
+      },
+      {
+        "id": "3:648",
+        "category": "protection",
+        "x": 1536,
+        "y": 3804,
+        "height": 1252
+      },
+      {
+        "id": "3:737",
+        "category": "weapons",
+        "x": 3024,
+        "y": 3556,
+        "height": 1996
+      },
+      {
+        "id": "3:879",
+        "category": "fire",
+        "x": 48,
+        "y": 5600,
+        "height": 1252
+      },
+      {
+        "id": "3:953",
+        "category": "vehicles",
+        "x": 1536,
+        "y": 5104,
+        "height": 1748
+      },
+      {
+        "id": "3:1079",
+        "category": "engineering",
+        "x": 3024,
+        "y": 5600,
+        "height": 3236
+      },
+      {
+        "id": "3:1321",
+        "category": "logistics",
+        "x": 48,
+        "y": 6900,
+        "height": 1004
+      }
+    ],
+    "mappings": [
+      {
+        "id": "infantry",
+        "nodeId": "3:127"
+      },
+      {
+        "id": "armor",
+        "nodeId": "3:132"
+      },
+      {
+        "id": "artillery",
+        "nodeId": "3:137"
+      },
+      {
+        "id": "air",
+        "nodeId": "3:142"
+      },
+      {
+        "id": "drone",
+        "nodeId": "3:148"
+      },
+      {
+        "id": "airdefense",
+        "nodeId": "3:153"
+      },
+      {
+        "id": "recon",
+        "nodeId": "3:158"
+      },
+      {
+        "id": "antitank",
+        "nodeId": "3:163"
+      },
+      {
+        "id": "engineer",
+        "nodeId": "3:169"
+      },
+      {
+        "id": "logistics",
+        "nodeId": "3:174"
+      },
+      {
+        "id": "medical",
+        "nodeId": "3:179"
+      },
+      {
+        "id": "ew",
+        "nodeId": "3:184"
+      },
+      {
+        "id": "transport",
+        "nodeId": "3:190"
+      },
+      {
+        "id": "command-point-1",
+        "nodeId": "3:201"
+      },
+      {
+        "id": "command-point-2",
+        "nodeId": "3:206"
+      },
+      {
+        "id": "command-point-3",
+        "nodeId": "3:211"
+      },
+      {
+        "id": "command-point-4",
+        "nodeId": "3:216"
+      },
+      {
+        "id": "command-point-5",
+        "nodeId": "3:222"
+      },
+      {
+        "id": "command-point-6",
+        "nodeId": "3:227"
+      },
+      {
+        "id": "command-point-7",
+        "nodeId": "3:232"
+      },
+      {
+        "id": "command-point-8",
+        "nodeId": "3:237"
+      },
+      {
+        "id": "command-point-9",
+        "nodeId": "3:243"
+      },
+      {
+        "id": "command-point-10",
+        "nodeId": "3:248"
+      },
+      {
+        "id": "command-point-11",
+        "nodeId": "3:253"
+      },
+      {
+        "id": "command-point-12",
+        "nodeId": "3:258"
+      },
+      {
+        "id": "command-point-13",
+        "nodeId": "3:264"
+      },
+      {
+        "id": "command-point-14",
+        "nodeId": "3:269"
+      },
+      {
+        "id": "command-point-15",
+        "nodeId": "3:274"
+      },
+      {
+        "id": "command-point-16",
+        "nodeId": "3:279"
+      },
+      {
+        "id": "command-point-17",
+        "nodeId": "3:285"
+      },
+      {
+        "id": "command-point-18",
+        "nodeId": "3:290"
+      },
+      {
+        "id": "command-point-19",
+        "nodeId": "3:295"
+      },
+      {
+        "id": "command-point-20",
+        "nodeId": "3:300"
+      },
+      {
+        "id": "command-point-21",
+        "nodeId": "3:306"
+      },
+      {
+        "id": "command-point-22",
+        "nodeId": "3:311"
+      },
+      {
+        "id": "command-point-23",
+        "nodeId": "3:316"
+      },
+      {
+        "id": "command-point-24",
+        "nodeId": "3:321"
+      },
+      {
+        "id": "command-point-25",
+        "nodeId": "3:327"
+      },
+      {
+        "id": "command-line-1",
+        "nodeId": "3:332"
+      },
+      {
+        "id": "command-line-2",
+        "nodeId": "3:337"
+      },
+      {
+        "id": "march-line-1",
+        "nodeId": "3:348"
+      },
+      {
+        "id": "march-line-2",
+        "nodeId": "3:353"
+      },
+      {
+        "id": "march-line-3",
+        "nodeId": "3:358"
+      },
+      {
+        "id": "march-line-4",
+        "nodeId": "3:363"
+      },
+      {
+        "id": "march-line-5",
+        "nodeId": "3:369"
+      },
+      {
+        "id": "march-line-6",
+        "nodeId": "3:374"
+      },
+      {
+        "id": "march-line-7",
+        "nodeId": "3:379"
+      },
+      {
+        "id": "march-line-8",
+        "nodeId": "3:384"
+      },
+      {
+        "id": "march-line-9",
+        "nodeId": "3:390"
+      },
+      {
+        "id": "march-line-10",
+        "nodeId": "3:395"
+      },
+      {
+        "id": "march-line-11",
+        "nodeId": "3:400"
+      },
+      {
+        "id": "march-line-12",
+        "nodeId": "3:405"
+      },
+      {
+        "id": "march-line-13",
+        "nodeId": "3:411"
+      },
+      {
+        "id": "march-line-14",
+        "nodeId": "3:416"
+      },
+      {
+        "id": "march-line-15",
+        "nodeId": "3:421"
+      },
+      {
+        "id": "march-line-16",
+        "nodeId": "3:426"
+      },
+      {
+        "id": "march-line-17",
+        "nodeId": "3:432"
+      },
+      {
+        "id": "march-line-18",
+        "nodeId": "3:437"
+      },
+      {
+        "id": "march-line-19",
+        "nodeId": "3:442"
+      },
+      {
+        "id": "march-line-20",
+        "nodeId": "3:447"
+      },
+      {
+        "id": "march-point-1",
+        "nodeId": "3:453"
+      },
+      {
+        "id": "march-point-2",
+        "nodeId": "3:458"
+      },
+      {
+        "id": "actions-area-1",
+        "nodeId": "3:469"
+      },
+      {
+        "id": "actions-area-2",
+        "nodeId": "3:474"
+      },
+      {
+        "id": "actions-area-3",
+        "nodeId": "3:479"
+      },
+      {
+        "id": "actions-area-4",
+        "nodeId": "3:484"
+      },
+      {
+        "id": "actions-area-5",
+        "nodeId": "3:490"
+      },
+      {
+        "id": "actions-area-6",
+        "nodeId": "3:495"
+      },
+      {
+        "id": "actions-area-7",
+        "nodeId": "3:500"
+      },
+      {
+        "id": "actions-area-8",
+        "nodeId": "3:505"
+      },
+      {
+        "id": "actions-line-1",
+        "nodeId": "3:511"
+      },
+      {
+        "id": "actions-line-2",
+        "nodeId": "3:516"
+      },
+      {
+        "id": "actions-line-3",
+        "nodeId": "3:521"
+      },
+      {
+        "id": "actions-line-4",
+        "nodeId": "3:526"
+      },
+      {
+        "id": "actions-line-5",
+        "nodeId": "3:532"
+      },
+      {
+        "id": "actions-line-6",
+        "nodeId": "3:537"
+      },
+      {
+        "id": "actions-line-7",
+        "nodeId": "3:542"
+      },
+      {
+        "id": "actions-line-8",
+        "nodeId": "3:547"
+      },
+      {
+        "id": "actions-line-9",
+        "nodeId": "3:553"
+      },
+      {
+        "id": "actions-line-10",
+        "nodeId": "3:558"
+      },
+      {
+        "id": "actions-line-11",
+        "nodeId": "3:563"
+      },
+      {
+        "id": "actions-line-12",
+        "nodeId": "3:568"
+      },
+      {
+        "id": "actions-line-13",
+        "nodeId": "3:574"
+      },
+      {
+        "id": "actions-line-14",
+        "nodeId": "3:579"
+      },
+      {
+        "id": "actions-line-15",
+        "nodeId": "3:584"
+      },
+      {
+        "id": "actions-line-16",
+        "nodeId": "3:589"
+      },
+      {
+        "id": "actions-line-17",
+        "nodeId": "3:595"
+      },
+      {
+        "id": "actions-line-18",
+        "nodeId": "3:600"
+      },
+      {
+        "id": "actions-line-19",
+        "nodeId": "3:605"
+      },
+      {
+        "id": "actions-line-20",
+        "nodeId": "3:610"
+      },
+      {
+        "id": "actions-line-21",
+        "nodeId": "3:616"
+      },
+      {
+        "id": "actions-line-22",
+        "nodeId": "3:621"
+      },
+      {
+        "id": "actions-line-23",
+        "nodeId": "3:626"
+      },
+      {
+        "id": "actions-line-24",
+        "nodeId": "3:631"
+      },
+      {
+        "id": "actions-point-1",
+        "nodeId": "3:637"
+      },
+      {
+        "id": "actions-point-2",
+        "nodeId": "3:642"
+      },
+      {
+        "id": "protection-point-1",
+        "nodeId": "3:653"
+      },
+      {
+        "id": "protection-point-2",
+        "nodeId": "3:658"
+      },
+      {
+        "id": "protection-point-3",
+        "nodeId": "3:663"
+      },
+      {
+        "id": "protection-point-4",
+        "nodeId": "3:668"
+      },
+      {
+        "id": "protection-point-5",
+        "nodeId": "3:674"
+      },
+      {
+        "id": "protection-point-6",
+        "nodeId": "3:679"
+      },
+      {
+        "id": "protection-point-7",
+        "nodeId": "3:684"
+      },
+      {
+        "id": "protection-point-8",
+        "nodeId": "3:689"
+      },
+      {
+        "id": "protection-line-1",
+        "nodeId": "3:695"
+      },
+      {
+        "id": "protection-line-2",
+        "nodeId": "3:700"
+      },
+      {
+        "id": "protection-area-1",
+        "nodeId": "3:705"
+      },
+      {
+        "id": "protection-area-2",
+        "nodeId": "3:710"
+      },
+      {
+        "id": "protection-area-3",
+        "nodeId": "3:716"
+      },
+      {
+        "id": "protection-area-4",
+        "nodeId": "3:721"
+      },
+      {
+        "id": "protection-area-5",
+        "nodeId": "3:726"
+      },
+      {
+        "id": "protection-area-6",
+        "nodeId": "3:731"
+      },
+      {
+        "id": "weapons-point-1",
+        "nodeId": "3:742"
+      },
+      {
+        "id": "weapons-point-2",
+        "nodeId": "3:747"
+      },
+      {
+        "id": "weapons-point-3",
+        "nodeId": "3:752"
+      },
+      {
+        "id": "weapons-point-4",
+        "nodeId": "3:757"
+      },
+      {
+        "id": "weapons-point-5",
+        "nodeId": "3:763"
+      },
+      {
+        "id": "weapons-point-6",
+        "nodeId": "3:768"
+      },
+      {
+        "id": "weapons-point-7",
+        "nodeId": "3:773"
+      },
+      {
+        "id": "weapons-point-8",
+        "nodeId": "3:778"
+      },
+      {
+        "id": "weapons-point-9",
+        "nodeId": "3:784"
+      },
+      {
+        "id": "weapons-point-10",
+        "nodeId": "3:789"
+      },
+      {
+        "id": "weapons-point-11",
+        "nodeId": "3:794"
+      },
+      {
+        "id": "weapons-point-12",
+        "nodeId": "3:799"
+      },
+      {
+        "id": "weapons-point-13",
+        "nodeId": "3:805"
+      },
+      {
+        "id": "weapons-point-14",
+        "nodeId": "3:810"
+      },
+      {
+        "id": "weapons-point-15",
+        "nodeId": "3:815"
+      },
+      {
+        "id": "weapons-point-16",
+        "nodeId": "3:820"
+      },
+      {
+        "id": "weapons-point-17",
+        "nodeId": "3:826"
+      },
+      {
+        "id": "weapons-point-18",
+        "nodeId": "3:831"
+      },
+      {
+        "id": "weapons-point-19",
+        "nodeId": "3:836"
+      },
+      {
+        "id": "weapons-point-20",
+        "nodeId": "3:841"
+      },
+      {
+        "id": "weapons-point-21",
+        "nodeId": "3:847"
+      },
+      {
+        "id": "weapons-point-22",
+        "nodeId": "3:852"
+      },
+      {
+        "id": "weapons-point-23",
+        "nodeId": "3:857"
+      },
+      {
+        "id": "weapons-point-24",
+        "nodeId": "3:862"
+      },
+      {
+        "id": "weapons-point-25",
+        "nodeId": "3:868"
+      },
+      {
+        "id": "weapons-area-1",
+        "nodeId": "3:873"
+      },
+      {
+        "id": "fire-point-1",
+        "nodeId": "3:884"
+      },
+      {
+        "id": "fire-area-1",
+        "nodeId": "3:889"
+      },
+      {
+        "id": "fire-area-2",
+        "nodeId": "3:894"
+      },
+      {
+        "id": "fire-area-3",
+        "nodeId": "3:899"
+      },
+      {
+        "id": "fire-line-1",
+        "nodeId": "3:905"
+      },
+      {
+        "id": "fire-line-2",
+        "nodeId": "3:910"
+      },
+      {
+        "id": "fire-line-3",
+        "nodeId": "3:915"
+      },
+      {
+        "id": "fire-line-4",
+        "nodeId": "3:920"
+      },
+      {
+        "id": "fire-line-5",
+        "nodeId": "3:926"
+      },
+      {
+        "id": "fire-line-6",
+        "nodeId": "3:931"
+      },
+      {
+        "id": "fire-line-7",
+        "nodeId": "3:936"
+      },
+      {
+        "id": "fire-line-8",
+        "nodeId": "3:941"
+      },
+      {
+        "id": "fire-line-9",
+        "nodeId": "3:947"
+      },
+      {
+        "id": "vehicles-point-1",
+        "nodeId": "3:958"
+      },
+      {
+        "id": "vehicles-point-2",
+        "nodeId": "3:963"
+      },
+      {
+        "id": "vehicles-point-3",
+        "nodeId": "3:968"
+      },
+      {
+        "id": "vehicles-point-4",
+        "nodeId": "3:973"
+      },
+      {
+        "id": "vehicles-point-5",
+        "nodeId": "3:979"
+      },
+      {
+        "id": "vehicles-point-6",
+        "nodeId": "3:984"
+      },
+      {
+        "id": "vehicles-point-7",
+        "nodeId": "3:989"
+      },
+      {
+        "id": "vehicles-point-8",
+        "nodeId": "3:994"
+      },
+      {
+        "id": "vehicles-point-9",
+        "nodeId": "3:1000"
+      },
+      {
+        "id": "vehicles-point-10",
+        "nodeId": "3:1005"
+      },
+      {
+        "id": "vehicles-point-11",
+        "nodeId": "3:1010"
+      },
+      {
+        "id": "vehicles-point-12",
+        "nodeId": "3:1015"
+      },
+      {
+        "id": "vehicles-point-13",
+        "nodeId": "3:1021"
+      },
+      {
+        "id": "vehicles-point-14",
+        "nodeId": "3:1026"
+      },
+      {
+        "id": "vehicles-point-15",
+        "nodeId": "3:1031"
+      },
+      {
+        "id": "vehicles-point-16",
+        "nodeId": "3:1036"
+      },
+      {
+        "id": "vehicles-point-17",
+        "nodeId": "3:1042"
+      },
+      {
+        "id": "vehicles-point-18",
+        "nodeId": "3:1047"
+      },
+      {
+        "id": "vehicles-point-19",
+        "nodeId": "3:1052"
+      },
+      {
+        "id": "vehicles-point-20",
+        "nodeId": "3:1057"
+      },
+      {
+        "id": "vehicles-point-21",
+        "nodeId": "3:1063"
+      },
+      {
+        "id": "vehicles-point-22",
+        "nodeId": "3:1068"
+      },
+      {
+        "id": "vehicles-point-23",
+        "nodeId": "3:1073"
+      },
+      {
+        "id": "engineering-point-1",
+        "nodeId": "3:1084"
+      },
+      {
+        "id": "engineering-point-2",
+        "nodeId": "3:1089"
+      },
+      {
+        "id": "engineering-point-3",
+        "nodeId": "3:1094"
+      },
+      {
+        "id": "engineering-point-4",
+        "nodeId": "3:1099"
+      },
+      {
+        "id": "engineering-point-5",
+        "nodeId": "3:1105"
+      },
+      {
+        "id": "engineering-point-6",
+        "nodeId": "3:1110"
+      },
+      {
+        "id": "engineering-point-7",
+        "nodeId": "3:1115"
+      },
+      {
+        "id": "engineering-point-8",
+        "nodeId": "3:1120"
+      },
+      {
+        "id": "engineering-point-9",
+        "nodeId": "3:1126"
+      },
+      {
+        "id": "engineering-point-10",
+        "nodeId": "3:1131"
+      },
+      {
+        "id": "engineering-point-11",
+        "nodeId": "3:1136"
+      },
+      {
+        "id": "engineering-point-12",
+        "nodeId": "3:1141"
+      },
+      {
+        "id": "engineering-point-13",
+        "nodeId": "3:1147"
+      },
+      {
+        "id": "engineering-point-14",
+        "nodeId": "3:1152"
+      },
+      {
+        "id": "engineering-point-15",
+        "nodeId": "3:1157"
+      },
+      {
+        "id": "engineering-point-16",
+        "nodeId": "3:1162"
+      },
+      {
+        "id": "engineering-point-17",
+        "nodeId": "3:1168"
+      },
+      {
+        "id": "engineering-point-18",
+        "nodeId": "3:1173"
+      },
+      {
+        "id": "engineering-point-19",
+        "nodeId": "3:1178"
+      },
+      {
+        "id": "engineering-line-1",
+        "nodeId": "3:1183"
+      },
+      {
+        "id": "engineering-line-2",
+        "nodeId": "3:1189"
+      },
+      {
+        "id": "engineering-line-3",
+        "nodeId": "3:1194"
+      },
+      {
+        "id": "engineering-line-4",
+        "nodeId": "3:1199"
+      },
+      {
+        "id": "engineering-line-5",
+        "nodeId": "3:1204"
+      },
+      {
+        "id": "engineering-line-6",
+        "nodeId": "3:1210"
+      },
+      {
+        "id": "engineering-line-7",
+        "nodeId": "3:1215"
+      },
+      {
+        "id": "engineering-line-8",
+        "nodeId": "3:1220"
+      },
+      {
+        "id": "engineering-line-9",
+        "nodeId": "3:1225"
+      },
+      {
+        "id": "engineering-line-10",
+        "nodeId": "3:1231"
+      },
+      {
+        "id": "engineering-line-11",
+        "nodeId": "3:1236"
+      },
+      {
+        "id": "engineering-line-12",
+        "nodeId": "3:1241"
+      },
+      {
+        "id": "engineering-line-13",
+        "nodeId": "3:1246"
+      },
+      {
+        "id": "engineering-line-14",
+        "nodeId": "3:1252"
+      },
+      {
+        "id": "engineering-line-15",
+        "nodeId": "3:1257"
+      },
+      {
+        "id": "engineering-line-16",
+        "nodeId": "3:1262"
+      },
+      {
+        "id": "engineering-line-17",
+        "nodeId": "3:1267"
+      },
+      {
+        "id": "engineering-line-18",
+        "nodeId": "3:1273"
+      },
+      {
+        "id": "engineering-line-19",
+        "nodeId": "3:1278"
+      },
+      {
+        "id": "engineering-line-20",
+        "nodeId": "3:1283"
+      },
+      {
+        "id": "engineering-line-21",
+        "nodeId": "3:1288"
+      },
+      {
+        "id": "engineering-line-22",
+        "nodeId": "3:1294"
+      },
+      {
+        "id": "engineering-area-1",
+        "nodeId": "3:1299"
+      },
+      {
+        "id": "engineering-area-2",
+        "nodeId": "3:1304"
+      },
+      {
+        "id": "engineering-area-3",
+        "nodeId": "3:1309"
+      },
+      {
+        "id": "engineering-area-4",
+        "nodeId": "3:1315"
+      },
+      {
+        "id": "logistics-point-1",
+        "nodeId": "3:1326"
+      },
+      {
+        "id": "logistics-point-2",
+        "nodeId": "3:1331"
+      },
+      {
+        "id": "logistics-point-3",
+        "nodeId": "3:1336"
+      },
+      {
+        "id": "logistics-point-4",
+        "nodeId": "3:1341"
+      },
+      {
+        "id": "logistics-point-5",
+        "nodeId": "3:1347"
+      },
+      {
+        "id": "logistics-point-6",
+        "nodeId": "3:1352"
+      },
+      {
+        "id": "logistics-point-7",
+        "nodeId": "3:1357"
+      },
+      {
+        "id": "logistics-point-8",
+        "nodeId": "3:1362"
+      },
+      {
+        "id": "logistics-point-9",
+        "nodeId": "3:1368"
+      },
+      {
+        "id": "logistics-point-10",
+        "nodeId": "3:1373"
+      },
+      {
+        "id": "logistics-point-11",
+        "nodeId": "3:1378"
+      },
+      {
+        "id": "logistics-point-12",
+        "nodeId": "3:1383"
+      }
+    ]
+  },
+  "audit": {
+    "_mcp": "figma-console-mcp",
+    "success": true,
+    "result": {
+      "cards": 231,
+      "uniqueIds": 231,
+      "errors": [],
+      "overlap": [],
+      "sectionBounds": {
+        "x": 0,
+        "y": 2485,
+        "width": 4512,
+        "height": 8884
+      },
+      "original": {
+        "id": "1:2",
+        "children": 0,
+        "width": 1440,
+        "height": 2325
+      },
+      "collections": [
+        {
+          "id": "VariableCollectionId:3:3",
+          "name": "DALA Atlas / Primitives",
+          "variables": 7
+        },
+        {
+          "id": "VariableCollectionId:3:4",
+          "name": "DALA Atlas / Semantic",
+          "variables": 14
+        }
+      ],
+      "styles": [
+        {
+          "id": "S:e34510d5d72b86e44a931e5fc4a2564538fc72cf,",
+          "name": "DALA Atlas / Title"
+        },
+        {
+          "id": "S:10551ba59c5e7443191c4401186709b6fed406de,",
+          "name": "DALA Atlas / Heading"
+        },
+        {
+          "id": "S:72a46ad951761f4508d3bf49071e8186da334bf2,",
+          "name": "DALA Atlas / Body"
+        },
+        {
+          "id": "S:dcfd367f5d2cbf88809defe05efa20f7d298b33c,",
+          "name": "DALA Atlas / Label"
+        }
+      ]
+    },
+    "timestamp": 1790470017605
+  },
+  "verifiedSymbols": 0
+}
